@@ -1,13 +1,13 @@
 import client
 import tkinter as tk
 
-
+# MUJTABA NAAI
 class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
         root.geometry('{}x{}'.format(700, 700))
         root.resizable(width=False, height=False)
-        root.title("Uno Mullti game")
+        root.title("Uno Multi game")
         self.pack()
         self.Login_page()
 
