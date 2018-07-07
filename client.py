@@ -3,7 +3,7 @@ import socket
 import sys
 
 def login_to_game(host, player_name):
-    port = 4444  # soket port number
+    port = 4444  # socket port number
 
     player_name += " / HTTP/1.0\r\n\r\n"
     # create socket
