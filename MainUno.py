@@ -1,5 +1,4 @@
 from PIL import ImageTk, Image
-
 import client
 import tkinter as tk
 
@@ -12,9 +11,9 @@ class Application(tk.Frame):
         root.resizable(width=False, height=False)
         root.title("Uno Multi game")
         self.pack()
-        self.Login_page()
+        self.login_page()
 
-    def Login_page(self):
+    def login_page(self):
         self.label_welcome_uno = tk.Label(self, text='Welcome to UNO Game',
                                           font=("Arial Bold", 35), foreground='black', justify='center')
         self.label_welcome_uno.pack()
@@ -27,23 +26,17 @@ class Application(tk.Frame):
         self.background_label.place(x=0, y=0, relwidth=1, relheight=1)
         self.background_label.pack()
 
-
         self.label_host_ip = tk.Label(self, text='Host ip: ')
         self.label_host_ip.pack(side="left")
 
         self.host_ip = tk.Entry(self)
-        # self.user_name.insert(0, "a default value")
         self.host_ip.pack(side="left")
-
 
         self.label_user_name = tk.Label(self, text='Username')
         self.label_user_name.pack(side="left")
 
         self.user_name = tk.Entry(self)
-        # self.user_name.insert(0, "a default value")
         self.user_name.pack(side="left")
-
-
 
         self.login_btn = tk.Button(self)
         self.login_btn["text"] = "LOGIN"
@@ -51,23 +44,19 @@ class Application(tk.Frame):
         self.login_btn.config(bg='green')
         self.login_btn.pack(side="left")
 
-
         self.quit = tk.Button(self, text="QUIT", fg="black", command=root.destroy)
         self.quit.config(bg='red')
         self.quit.pack(side="left")
 
-        self.label_welcome = tk.Label(text= "login please")
+        self.label_welcome = tk.Label(text="login please")
         self.label_welcome.pack(side="bottom")
-
 
     def playing_page(self):
         self.clean_frame()
 
-
     def clean_frame(self):
         for widget in self.winfo_children():
             widget.destroy()
-
 
     def Login_command(self):
         print("hi there, everyone!")
@@ -77,8 +66,6 @@ class Application(tk.Frame):
             self.playing_page()
         else:
             self.label_welcome['text'] = "You failed to login, try again"
-
-
 
 
 if __name__ == '__main__':
