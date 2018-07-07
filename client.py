@@ -2,10 +2,10 @@
 import socket
 import sys
 
-def login_to_game(host, player_name):
+def login_to_game(host, user_name):
     port = 4444  # socket port number
 
-    player_name += " / HTTP/1.0\r\n\r\n"
+    player_name =user_name+ " / HTTP/1.0\r\n\r\n"
     # create socket
     print('# Creating socket')
     try:

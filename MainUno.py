@@ -1,3 +1,5 @@
+from PIL import ImageTk, Image
+
 import client
 import tkinter as tk
 
@@ -6,12 +8,26 @@ class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
         root.geometry('{}x{}'.format(700, 700))
+        root.config(bg='black')
         root.resizable(width=False, height=False)
-        root.title("Uno Mullti game")
+        root.title("Uno Multi game")
         self.pack()
         self.Login_page()
 
     def Login_page(self):
+        self.label_welcome_uno = tk.Label(self, text='Welcome to UNO Game',
+                                          font=("Arial Bold", 35), foreground='black', justify='center')
+        self.label_welcome_uno.pack()
+
+        self.image = Image.open("download.png")
+        self.image = self.image.resize((500, 500), Image.ANTIALIAS)
+        self.img_copy = self.image.copy()
+        self.background_image = ImageTk.PhotoImage(self.img_copy)
+        self.background_label = tk.Label(self, image=self.background_image)
+        self.background_label.place(x=0, y=0, relwidth=1, relheight=1)
+        self.background_label.pack()
+
+
         self.label_host_ip = tk.Label(self, text='Host ip: ')
         self.label_host_ip.pack(side="left")
 
@@ -30,12 +46,14 @@ class Application(tk.Frame):
 
 
         self.login_btn = tk.Button(self)
-        self.login_btn["text"] = "Login"
+        self.login_btn["text"] = "LOGIN"
         self.login_btn["command"] = self.Login_command
+        self.login_btn.config(bg='green')
         self.login_btn.pack(side="left")
 
 
-        self.quit = tk.Button(self, text="QUIT", fg="red", command=root.destroy)
+        self.quit = tk.Button(self, text="QUIT", fg="black", command=root.destroy)
+        self.quit.config(bg='red')
         self.quit.pack(side="left")
 
         self.label_welcome = tk.Label(text= "login please")
