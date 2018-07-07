@@ -109,7 +109,7 @@ private static void buildConnections(int port){
 private static void ReadyToPlay(String s, PrintWriter out) throws IOException {
     try
     {
-        out.println("<Welcome to the Uno Game Online Game!/>");
+        out.println("<You are now ready to play Uno/>");
         out.flush();
 
         FileWriter writer = new FileWriter("uno.txt",true);
