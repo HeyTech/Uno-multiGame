@@ -2,6 +2,7 @@
 import socket
 import sys
 
+
 def login_to_game(host, user_name):
     port = 4444  # socket port number
 
@@ -51,7 +52,6 @@ def send_server_request():
     ## Send message
 
     print('# Sending data to server')
-
     try:
         s.sendall("<ReadyToPlay/> / HTTP/1.0\r\n\r\n".encode())
     except socket.error:

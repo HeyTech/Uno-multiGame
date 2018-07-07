@@ -58,8 +58,6 @@ class Application(tk.Frame):
         for widget in self.winfo_children():
             widget.destroy()
 
-<<<<<<< HEAD
-=======
     def game_mode(self):
         self.quick_mode_btn = tk.Button(self, text="QUICK PLAY")
         self.quick_mode_btn.config(bg='yellow')
@@ -73,7 +71,6 @@ class Application(tk.Frame):
         self.update_btn.config(bg="green")
         self.update_btn.pack()
 
->>>>>>> 0be76c9b65034fce20e465845999634ae760fa30
     def Login_command(self):
         print("hi there, everyone!")
         print(self.host_ip.get(), self.user_name.get())
