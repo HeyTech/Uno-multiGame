@@ -40,7 +40,7 @@ class Application(tk.Frame):
 
         self.login_btn = tk.Button(self)
         self.login_btn["text"] = "LOGIN"
-        self.login_btn["command"] = self.Login_command
+        self.login_btn["command"] = self.login_command
         self.login_btn.config(bg='green')
         self.login_btn.pack(side="left")
 
@@ -71,7 +71,7 @@ class Application(tk.Frame):
         self.update_btn.config(bg="green")
         self.update_btn.pack()
 
-    def Login_command(self):
+    def login_command(self):
         print("hi there, everyone!")
         print(self.host_ip.get(), self.user_name.get())
         if client.login_to_game(self.host_ip.get(), self.user_name.get()):
