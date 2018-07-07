@@ -7,7 +7,7 @@ class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
         root.geometry('{}x{}'.format(700, 700))
-        root.config(bg='black')
+        # root.config(bg='black')
         root.resizable(width=False, height=False)
         root.title("Uno Multi game")
         self.pack()
@@ -58,12 +58,29 @@ class Application(tk.Frame):
         for widget in self.winfo_children():
             widget.destroy()
 
+<<<<<<< HEAD
+=======
+    def game_mode(self):
+        self.quick_mode_btn = tk.Button(self, text="QUICK PLAY")
+        self.quick_mode_btn.config(bg='yellow')
+        self.quick_mode_btn.pack(side="left")
+        self.two_player_btn = tk.Button(self, text="2V2")
+        self.two_player_btn.config(bg='yellow')
+        self.two_player_btn.pack(side="left")
+        self.player_list = tk.Listbox(self)
+        self.player_list.pack()
+        self.update_btn = tk.Button(self, text="UPDATE")
+        self.update_btn.config(bg="green")
+        self.update_btn.pack()
+
+>>>>>>> 0be76c9b65034fce20e465845999634ae760fa30
     def Login_command(self):
         print("hi there, everyone!")
         print(self.host_ip.get(), self.user_name.get())
         if client.login_to_game(self.host_ip.get(), self.user_name.get()):
             self.label_welcome['text'] = "You successfully loged in"
             self.playing_page()
+            self.game_mode()
         else:
             self.label_welcome['text'] = "You failed to login, try again"
 
