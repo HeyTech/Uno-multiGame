@@ -1,3 +1,7 @@
 <Uno Multi Game Online Game>
-<Room Name='bla111' Mode='single' Capacity='1/10' Players='username'  / HTTP/1.0/>
-<Room Name='bla' Mode='single' Capacity='1/10' Players='username'  / HTTP/1.0/>
+<OnlinePlayer name='mujtaba' status='ready'/>
+<OnlinePlayer name='nando' status='ready'/>
+<OnlinePlayer name='ranj' status='idle'/>
+<OnlinePlayer name='kool' status='idle'/>
+<Room Name='blabla' Mode='2v2' Capacity='1/10' Players='username'/>
+<Room Name='bla' Mode='single' Capacity='1/10' Players='username'/>

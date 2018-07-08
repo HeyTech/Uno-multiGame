@@ -56,8 +56,34 @@ private static void buildConnections(int port){
 
 				System.err.println("Accepted connection from client " + id_name);
 
-				out.println("<Accepted connection from " + id_name +"/>");
-				out.flush();
+				
+				
+				File file = new File("uno.txt");
+		        BufferedReader reader = new BufferedReader(new FileReader(file));
+		        String line = "";
+		        Boolean alreadyIdle = false;
+		      
+		        while((line = reader.readLine()) != null){
+		            if(line.startsWith("<OnlinePlayer name='" + id_name)){
+		            	alreadyIdle = true;
+		            	break;
+		            }
+		        }
+		        reader.close();
+		        
+		        if(alreadyIdle){
+					out.println("<Refused connection: " + id_name +" is taken/>");
+					out.flush();
+		        }else{
+			        FileWriter writer = new FileWriter("uno.txt",true);
+			        writer.write("<OnlinePlayer name='" + id_name + "' status='idle'/>\n");
+			        writer.close();
+					out.println("<Accepted connection from " + id_name +"/>");
+					out.flush();
+		        }
+		        
+
+
 			}catch(SocketTimeoutException e){}
 
 			//Listen to connected clients
@@ -91,26 +117,94 @@ private static void buildConnections(int port){
 
 			if(is.available()>0){
 				s = in.nextLine();
+				s = s.replaceAll(" / HTTP/1.0", "");
 				clientName = theClients.get(i);
 				if(s.startsWith("<ReadyToPlay/>")) {
 					System.out.println(clientName + " is now online.");
 					ReadyToPlay(clientName, out);
 					out.flush();
-				} else if(s.startsWith("<OnlinePlayers/>")) {
-					System.out.println(clientName + " asks for online players.");
-					OnlinePlayers("<OnlinePlayer", out);
-				} else if(s.startsWith("<Exit/>")) {
+				}else if(s.startsWith("<Exit/>")) {
 					System.out.println(clientName + " left the game.");
 					LeaveGame(clientName, s, out);
 				}else if(s.startsWith("<CreateRoom")){
+					System.out.println(clientName + " asks to create a new room.");
 					CreateRoom(s, out);
+				}else if(s.startsWith("<UpdateLists/>")){
+					System.out.println(clientName + " asks to update the lists (onlinePlayers and Games)");
+					UpdateLists(s, out);
 				}
-						
-				//else if (s.startsWith("<UpdateList/>")){
-				//}
 			}
 		}
 	}
+
+private static void UpdateLists(String s, PrintWriter out) {
+
+	String plyersOnline = OnlinePlayers("<OnlinePlayer");
+	System.out.println(plyersOnline);
+	
+	String roomsCreated = CreatedGames("<Room ");
+	System.out.println(plyersOnline);
+
+	String sendOut = plyersOnline.replace("''", "', '") + " - " +roomsCreated.replace("''", "', '");
+	out.print(sendOut);
+	out.flush();
+}
+
+
+private static  String OnlinePlayers(String onlinePlayers){
+	     String plyersOnline = "'Online players':[";
+         try
+             {
+             File file = new File("uno.txt");
+             BufferedReader reader = new BufferedReader(new FileReader(file));
+             String line = "";
+             while((line = reader.readLine()) != null){
+            	 if(line.startsWith(onlinePlayers)){
+            		 // String onlinePlayers= "<OnlinePlayer name='mujtaba' status='idle'/>";
+            		 String[] temp = line.split("'");
+            		 String player = String.join(" ", temp[1], temp[3]);
+            		 plyersOnline += "'"+player+"'";
+            		 //System.out.println(player);            	 
+            	 }
+
+             }
+             reader.close();
+             plyersOnline += "]";
+         }
+         catch (IOException ioe)
+             {
+             ioe.printStackTrace();
+         }
+         return plyersOnline;
+     }
+
+private static  String CreatedGames(String createdGames){
+    String roomCreated = "'Rooms Created':[";
+    try
+        {
+        File file = new File("uno.txt");
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line = "";
+        while((line = reader.readLine()) != null){
+       	 if(line.startsWith(createdGames)){
+         	//String roomsCreated= "<Room Name='bla' Mode='single' Capacity='1/10' Players='username'/>";
+        	String[] temp = line.split("'");
+        	String room = String.join(" ", temp[1], temp[3], temp[5]);
+        	roomCreated += "'" + room + "'";
+        	//System.out.println(room); 
+       	 }
+
+        }
+        reader.close();
+        roomCreated += "]";
+    }
+    catch (IOException ioe)
+        {
+        ioe.printStackTrace();
+    }
+    return roomCreated;
+}
+
 
 private static void CreateRoom(String s, PrintWriter out) {
     try
@@ -135,7 +229,7 @@ private static void CreateRoom(String s, PrintWriter out) {
         	}
         }
         reader.close();
-
+        
         FileWriter writer = new FileWriter("uno.txt",true);
 
         
@@ -159,16 +253,30 @@ private static void CreateRoom(String s, PrintWriter out) {
 
 }
 
-// 'Online players':['Mujtaba', 'Nandu', 'Ranju'] - 'Rooms Created': {['name1', '2v2', '2/4'], ['name2', '2v2', '4/4'], ['name3', 'single', '2/10']}
-private static void ReadyToPlay(String s, PrintWriter out) throws IOException {
+private static void ReadyToPlay(String clientName, PrintWriter out) throws IOException {
     try
     {
+
+
+        File file = new File("uno.txt");
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line = "", text = "";
+      
+        while((line = reader.readLine()) != null){
+        	if(line.startsWith("<OnlinePlayer name='" + clientName)){
+        		line = "<OnlinePlayer name='" + clientName + "' status='ready'/>";
+        	}
+        	text += line  + "\n";
+        }
+        reader.close();
+        
+        
+        FileWriter writer = new FileWriter("uno.txt");
+        writer.write(text);
+        writer.close();
+        
         out.println("<You are now ready to play Uno/>");
         out.flush();
-
-        FileWriter writer = new FileWriter("uno.txt",true);
-        writer.write("<OnlinePlayer name=\"" + s + "\" status=\"ready\"/>\n");
-        writer.close();
     }
     catch (IOException ioe)
     {
@@ -176,39 +284,6 @@ private static void ReadyToPlay(String s, PrintWriter out) throws IOException {
     }
 
 }
-
-private static  int OnlinePlayers(String s, PrintWriter out)
-         {
-	     int iSend=0;
-         try
-             {
-             File file = new File("uno.txt");
-             BufferedReader reader = new BufferedReader(new FileReader(file));
-             String line = "", text = "";
-             while((line = reader.readLine()) != null)
-                 {
-
-            	 if(line.startsWith(s)){
-            		 iSend++;
-            		 out.println(line);
-                     out.flush();
-            	 }
-                 text += line + "\n";
-
-             }
-             reader.close();
-
-
-             FileWriter writer = new FileWriter("uno.txt");
-             writer.write(text);
-             writer.close();
-         }
-         catch (IOException ioe)
-             {
-             ioe.printStackTrace();
-         }
-         return iSend;
-     }
 
 private static  void LeaveGame(String clientName, String swrite, PrintWriter out)
 {
