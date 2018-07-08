@@ -60,17 +60,43 @@ class Application(tk.Frame):
 
     def game_mode(self):
         self.clean_frame()
-        self.quick_mode_btn = tk.Button(self, text="QUICK PLAY")
-        self.quick_mode_btn.config(bg='yellow')
-        self.quick_mode_btn.pack(side="left")
-        self.two_player_btn = tk.Button(self, text="2V2")
-        self.two_player_btn.config(bg='yellow')
-        self.two_player_btn.pack(side="left")
+        self.game_mode_list = ['Single Mode', '2V2']
+        self.players_list = ['Monisha', 'Mujtaba', 'Nandhini', 'Ranjani']
+        self.game_list = tk.Listbox(self)
+        for mode in self.game_mode_list:
+            self.game_list.insert(tk.END, mode)
+        self.game_list.pack()
         self.player_list = tk.Listbox(self)
+        for players in self.players_list:
+            self.player_list.insert(tk.END, players)
         self.player_list.pack()
-        self.update_btn = tk.Button(self, text="UPDATE")
-        self.update_btn.config(bg="green")
+        self.update_btn = tk.Button(self, text="Update")
         self.update_btn.pack()
+        self.start_btn = tk.Button(self, text="Start")
+        self.start_btn.pack()
+        self.game_label = tk.Label(self, text='Select Mode')
+        self.player_label = tk.Label(self, text='Select Player')
+
+
+        self.game_label.pack()
+        self.player_label.pack()
+
+        def get_game_mode(*x):
+            r = self.game_list.curselection()[0]
+            print(r)
+            self.game_list_selected = self.game_mode_list[r]
+            print(self.game_list_selected)
+            self.game_label.config(text=self.game_list_selected)
+            self.game_label.pack()
+        self.game_list.bind("<<ListboxSelect>>", get_game_mode)
+
+        def get_player(*x):
+            w = self.player_list.curselection()[0]
+            print(w)
+            self.player_list_selected = self.players_list[w]
+            self.player_label.config(text=self.player_list_selected)
+            self.player_label.pack()
+        self.player_list.bind("<<ListboxSelect>>", get_player)
 
     def login_command(self):
         self.game_mode()
