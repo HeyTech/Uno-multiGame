@@ -5,6 +5,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class UnoServer {
 
@@ -101,11 +102,64 @@ private static void buildConnections(int port){
 				} else if(s.startsWith("<Exit/>")) {
 					System.out.println(clientName + " left the game.");
 					LeaveGame(clientName, s, out);
+				}else if(s.startsWith("<CreateRoom")){
+					CreateRoom(s, out);
 				}
+						
+				//else if (s.startsWith("<UpdateList/>")){
+				//}
 			}
 		}
 	}
 
+private static void CreateRoom(String s, PrintWriter out) {
+    try
+    {
+    	//String xmlString = "<CreateRoom Name='bla' Mode='single' Capacity='1/10' Players='username'/>";
+    	String[] xmlarray = s.replace("/>", " ").replace("<CreateRoom ", "").split(" ");
+    	Arrays.toString(xmlarray);
+    	String room = "<Room " + String.join(" ", xmlarray) + "/>";
+    	System.out.println(room);	
+    	
+    	
+        File file = new File("uno.txt");
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line = "";
+        Boolean nameNotFound = true;
+        
+        while((line = reader.readLine()) != null)
+        {
+        	if(line.startsWith("<Room " + xmlarray[0])){
+        		nameNotFound = false;
+        		break;
+        	}
+        }
+        reader.close();
+
+        FileWriter writer = new FileWriter("uno.txt",true);
+
+        
+        if(nameNotFound){
+            writer.write(room+"\n");
+            out.println("<GameRoom Created/>");
+        }else{
+        	out.println("<GameRoom Failed: Name taken/>");
+        }
+        writer.close();
+        out.flush();
+
+    }
+    catch (IOException ioe)
+    {
+        ioe.printStackTrace();
+    }
+    
+    
+    
+
+}
+
+// 'Online players':['Mujtaba', 'Nandu', 'Ranju'] - 'Rooms Created': {['name1', '2v2', '2/4'], ['name2', '2v2', '4/4'], ['name3', 'single', '2/10']}
 private static void ReadyToPlay(String s, PrintWriter out) throws IOException {
     try
     {
@@ -156,9 +210,6 @@ private static  int OnlinePlayers(String s, PrintWriter out)
          return iSend;
      }
 
-
-
-
 private static  void LeaveGame(String clientName, String swrite, PrintWriter out)
 {
     try
@@ -199,29 +250,8 @@ private static  void LeaveGame(String clientName, String swrite, PrintWriter out
     }
 
 }
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

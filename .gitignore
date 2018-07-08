@@ -269,3 +269,6 @@ venv.bak/
 
 
 # End of https://www.gitignore.io/api/java,python,eclipse,pycharm
+
+# todo and progress files
+.todo
