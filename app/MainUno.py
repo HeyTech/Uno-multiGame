@@ -73,6 +73,8 @@ class Application(tk.Frame):
         print("<CreateRoom Name=" + str('\'') + str(self.name_of_the_room) + str('\'') + " Mode=" + str('\'') +
               str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(self.capacity) + str('\'') +
               " Player=" + str('\'') + str(self.player_name) + str('\'/>'))
+        command_to_server = str("<CreateRoom Name=") + str('\'') + str(self.name_of_the_room) + str('\'') + str(" Mode=") + str('\'') + str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(self.capacity) + str('\'') + str(" Player=") + str('\'') + str(self.player_name) + str('\'/>')
+        client.send_server_request(command_to_server)
         self.game_play()
 
     def selection_made(self):
