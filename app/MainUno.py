@@ -18,7 +18,7 @@ class Application(tk.Frame):
                                           font=("Arial Bold", 35), foreground='black', justify='center')
         self.label_welcome_uno.pack()
 
-        self.image = Image.open("download.png")
+        self.image = Image.open("images/download.png")
         self.image = self.image.resize((500, 500), Image.ANTIALIAS)
         self.img_copy = self.image.copy()
         self.background_image = ImageTk.PhotoImage(self.img_copy)
