@@ -59,6 +59,7 @@ class Application(tk.Frame):
             widget.destroy()
 
     def game_mode(self):
+        self.clean_frame()
         self.quick_mode_btn = tk.Button(self, text="QUICK PLAY")
         self.quick_mode_btn.config(bg='yellow')
         self.quick_mode_btn.pack(side="left")
@@ -72,15 +73,17 @@ class Application(tk.Frame):
         self.update_btn.pack()
 
     def login_command(self):
+        self.game_mode()
+        """
         print("hi there, everyone!")
         print(self.host_ip.get(), self.user_name.get())
         if client.login_to_game(self.host_ip.get(), self.user_name.get()):
             self.label_welcome['text'] = "You successfully loged in"
-            self.playing_page()
+            # self.playing_page()
             self.game_mode()
         else:
             self.label_welcome['text'] = "You failed to login, try again"
-
+        """
 
 if __name__ == '__main__':
     root = tk.Tk()
