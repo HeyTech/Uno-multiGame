@@ -1,7 +1,2 @@
 <Uno Multi Game Online Game>
-<OnlinePlayer name='mujtaba' status='ready'/>
-<OnlinePlayer name='nando' status='ready'/>
-<OnlinePlayer name='ranj' status='idle'/>
-<OnlinePlayer name='kool' status='idle'/>
-<Room Name='blabla' Mode='2v2' Capacity='1/10' Players='username'/>
-<Room Name='bla' Mode='single' Capacity='1/10' Players='username'/>
+<OnlinePlayer name='Mujtaba' status='idle'/>
