@@ -82,20 +82,26 @@ class Application(tk.Frame):
         self.player_label.pack()
 
         def get_game_mode(*x):
-            r = self.game_list.curselection()[0]
-            print(r)
-            self.game_list_selected = self.game_mode_list[r]
-            print(self.game_list_selected)
-            self.game_label.config(text=self.game_list_selected)
-            self.game_label.pack()
+            try:
+                r = self.game_list.curselection()[0]
+                print(r)
+                self.game_list_selected = self.game_mode_list[r]
+                print(self.game_list_selected)
+                self.game_label.config(text=self.game_list_selected)
+                self.game_label.pack()
+            except:
+                pass
         self.game_list.bind("<<ListboxSelect>>", get_game_mode)
 
         def get_player(*x):
-            w = self.player_list.curselection()[0]
-            print(w)
-            self.player_list_selected = self.players_list[w]
-            self.player_label.config(text=self.player_list_selected)
-            self.player_label.pack()
+            try:
+                w = self.player_list.curselection()[0]
+                print(w)
+                self.player_list_selected = self.players_list[w]
+                self.player_label.config(text=self.player_list_selected)
+                self.player_label.pack()
+            except:
+                pass
         self.player_list.bind("<<ListboxSelect>>", get_player)
 
     def login_command(self):
