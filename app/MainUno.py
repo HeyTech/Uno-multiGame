@@ -76,7 +76,7 @@ class Application(tk.Frame):
         command_to_server = str("<CreateRoom Name=") + str('\'') + str(self.name_of_the_room) + str('\'') + str(" Mode=") + str('\'') + str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(self.capacity) + str('\'') + str(" Player=") + str('\'') + str(self.player_name) + str('\'/>')
         self.room_message = (client.send_server_request(command_to_server)).decode()
         self.room_splitted = self.room_message.split(" ")
-        # print(self.room_splitted)
+        #print(self.room_splitted)
         if self.room_splitted[1] == "Failed:":
             self.label_room = tk.Label(self, text="Room name is already taken. Try with a different room name")
             self.label_room.pack()
@@ -192,14 +192,18 @@ class Application(tk.Frame):
         print("hi there, everyone!")
         self.player_name = self.user_name.get()
         print(self.host_ip.get(), self.user_name.get())
-        if client.login_to_game(self.host_ip.get(), self.user_name.get()):
+        login_message_from_server = (client.login_to_game(self.host_ip.get(), self.user_name.get())).decode()
+        accepted_or_rejected = login_message_from_server.split(" ")
+        if str(accepted_or_rejected[0]) == "Accepted":
             self.label_welcome['text'] = "You successfully loged in"
             # self.playing_page()
             self.game_mode()
         else:
-            self.label_welcome['text'] = "You failed to login, try again"
-
-        self.game_mode()
+            self.label_welcome['text'] = login_message_from_server + str(
+                "Close the server and try again with a different name")
+            # self.clean_frame()
+            # self.login_page()
+            # self.game_mode()
 
 
 if __name__ == '__main__':
