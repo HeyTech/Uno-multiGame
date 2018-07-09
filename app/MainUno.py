@@ -138,8 +138,8 @@ class Application(tk.Frame):
 
     def game_mode(self):
         self.clean_frame()
-        string = "'Online players':['Mujtaba playing', 'Nandu playing', 'Ranju ready'] - 'Rooms Created': {'name1 2v2 2/4', 'name2 2v2 4/4', 'name3 single 2/10'}"
-        self.splitted = string.split(" - ")
+        # string = "'Online players':['Mujtaba playing', 'Nandu playing', 'Ranju ready'] - 'Rooms Created': {'name1 2v2 2/4', 'name2 2v2 4/4', 'name3 single 2/10'}"
+        # self.splitted = string.split(" - ")
         self.game_mode_frame = tk.LabelFrame(self, padx=5, pady=5)
         self.game_mode_frame.pack(side="left", padx=10, pady=10)
         self.game_mode_name = tk.Label(self.game_mode_frame, text="Game Modes")

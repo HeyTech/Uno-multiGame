@@ -44,7 +44,7 @@ def login_to_game(host, user_name):
     reply = s.recv(4096)
 
     print(reply)
-    return True
+    return reply
 
 
 def send_server_request(command):
@@ -61,6 +61,7 @@ def send_server_request(command):
     reply = s.recv(4096)
 
     print(reply)
+    return reply
 
 # namn = input("namn: ")
 # print("------", namn)
