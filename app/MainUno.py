@@ -74,15 +74,22 @@ class Application(tk.Frame):
               str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(self.capacity) + str('\'') +
               " Player=" + str('\'') + str(self.player_name) + str('\'/>'))
         command_to_server = str("<CreateRoom Name=") + str('\'') + str(self.name_of_the_room) + str('\'') + str(" Mode=") + str('\'') + str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(self.capacity) + str('\'') + str(" Player=") + str('\'') + str(self.player_name) + str('\'/>')
-        client.send_server_request(command_to_server)
-        self.game_play()
+        self.room_message = (client.send_server_request(command_to_server)).decode()
+        self.room_splitted = self.room_message.split(" ")
+        # print(self.room_splitted)
+        if self.room_splitted[1] == "Failed:":
+            self.label_room = tk.Label(self, text="Room name is already taken. Try with a different room name")
+            self.label_room.pack()
+            self.room = self.room_name.get()
+        else:
+            self.game_play()
 
     def selection_made(self):
         self.selected_option = self.var.get()
 
     def create_room(self):
         self.var = tk.StringVar()
-        self.clean_frame()
+        # self.clean_frame()
         self.frame_room_name = tk.LabelFrame(self, padx=5, pady=5)
         self.frame_room_name.pack(padx=10, pady=10)
         self.label_room_name = tk.Label(self.frame_room_name, text="Room Name")
@@ -107,6 +114,11 @@ class Application(tk.Frame):
         self.btn_cancel.pack(side="left")
 
     def update_list(self):
+        self.update_command = "<UpdateLists/>"
+        self.players_rooms = (client.send_server_request(self.update_command)).decode()
+        # print(self.players_rooms[0:10])
+        # players_rooms = "'Online players':['Mujtaba playing', 'Nandu playing', 'Ranju ready'] - 'Rooms Created': {'name1 2v2 2/4', 'name2 2v2 4/4', 'name3 single 2/10'}"
+        self.splitted = self.players_rooms.split(" - ")
         self.online_list = self.splitted[0].split(":")
         self.players_list = [re.sub(r"[^a-zA-Z0-9]+", ' ', k) for k in self.online_list[1].split(",")]
         self.rooms_list = self.splitted[1].split(":")
@@ -153,9 +165,9 @@ class Application(tk.Frame):
         def get_game_mode(*x):
             try:
                 r = self.game_list.curselection()[0]
-                print(r)
+                # print(r)
                 self.game_list_selected = self.game_mode_list[r]
-                print(self.game_list_selected)
+                # print(self.game_list_selected)
                 self.game_label.config(text=self.game_list_selected)
                 self.game_label.pack()
             except:
@@ -165,9 +177,9 @@ class Application(tk.Frame):
         def get_player(*x):
             try:
                 w = self.player_list.curselection()[0]
-                print(w)
+                # print(w)
                 self.player_list_selected = self.players_list[w]
-                print(self.player_list_selected)
+                # print(self.player_list_selected)
                 self.player_label.config(text=self.player_list_selected)
                 self.player_label.pack()
             except:
