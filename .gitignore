@@ -274,4 +274,4 @@ venv.bak/
 *.todo
 
 # Personal files
-uno.txt
+UnoServer/uno.txt

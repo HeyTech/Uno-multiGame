@@ -1,11 +1,13 @@
 import re
 from PIL import ImageTk, Image
 import client
+
 import tkinter as tk
 
 
 class Application(tk.Frame):
     def __init__(self, master=None):
+        self.client = client.Socket_class()
         self.player_name = ''
         self.selected_option = ''
         super().__init__(master)
@@ -74,7 +76,8 @@ class Application(tk.Frame):
               str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(self.capacity) + str('\'') +
               " Player=" + str('\'') + str(self.player_name) + str('\'/>'))
         command_to_server = str("<CreateRoom Name=") + str('\'') + str(self.name_of_the_room) + str('\'') + str(" Mode=") + str('\'') + str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(self.capacity) + str('\'') + str(" Player=") + str('\'') + str(self.player_name) + str('\'/>')
-        self.room_message = (client.send_server_request(command_to_server)).decode()
+        self.room_message = (self.client
+                             .send_server_request(command_to_server)).decode()
         self.room_splitted = self.room_message.split(" ")
         #print(self.room_splitted)
         if self.room_splitted[1] == "Failed:":
@@ -88,8 +91,8 @@ class Application(tk.Frame):
         self.selected_option = self.var.get()
 
     def create_room(self):
+        self.clean_frame()
         self.var = tk.StringVar()
-        # self.clean_frame()
         self.frame_room_name = tk.LabelFrame(self, padx=5, pady=5)
         self.frame_room_name.pack(padx=10, pady=10)
         self.label_room_name = tk.Label(self.frame_room_name, text="Room Name")
@@ -115,7 +118,9 @@ class Application(tk.Frame):
 
     def update_list(self):
         self.update_command = "<UpdateLists/>"
-        self.players_rooms = (client.send_server_request(self.update_command)).decode()
+        print(self.update_command)
+        self.players_rooms = (self.client
+                              .send_server_request(self.update_command)).decode()
         # print(self.players_rooms[0:10])
         # players_rooms = "'Online players':['Mujtaba playing', 'Nandu playing', 'Ranju ready'] - 'Rooms Created': {'name1 2v2 2/4', 'name2 2v2 4/4', 'name3 single 2/10'}"
         self.splitted = self.players_rooms.split(" - ")
@@ -191,10 +196,9 @@ class Application(tk.Frame):
             print("hi there, everyone!")
             self.player_name = self.user_name.get()
             print(self.host_ip.get(), self.user_name.get())
-            login_message_from_server = (client.login_to_game(self.host_ip.get(), self.user_name.get())).decode()
+            login_message_from_server = self.client.login_to_game(self.host_ip.get(), self.user_name.get())
             if "Accepted connection" in str(login_message_from_server):
                 self.label_welcome['text'] = "You successfully loged in"
-                self.playing_page()
                 self.game_mode()
             else:
                 self.label_welcome['text'] = login_message_from_server[1:-3] + str("\ntry again with a different name")
