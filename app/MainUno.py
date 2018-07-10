@@ -187,23 +187,19 @@ class Application(tk.Frame):
         self.player_list.bind("<<ListboxSelect>>", get_player)
 
     def login_command(self):
-
-
-        print("hi there, everyone!")
-        self.player_name = self.user_name.get()
-        print(self.host_ip.get(), self.user_name.get())
-        login_message_from_server = (client.login_to_game(self.host_ip.get(), self.user_name.get())).decode()
-        accepted_or_rejected = login_message_from_server.split(" ")
-        if str(accepted_or_rejected[0]) == "Accepted":
-            self.label_welcome['text'] = "You successfully loged in"
-            # self.playing_page()
-            self.game_mode()
-        else:
-            self.label_welcome['text'] = login_message_from_server + str(
-                "Close the server and try again with a different name")
-            # self.clean_frame()
-            # self.login_page()
-            # self.game_mode()
+        try:
+            print("hi there, everyone!")
+            self.player_name = self.user_name.get()
+            print(self.host_ip.get(), self.user_name.get())
+            login_message_from_server = (client.login_to_game(self.host_ip.get(), self.user_name.get())).decode()
+            if "Accepted connection" in str(login_message_from_server):
+                self.label_welcome['text'] = "You successfully loged in"
+                self.playing_page()
+                self.game_mode()
+            else:
+                self.label_welcome['text'] = login_message_from_server[1:-3] + str("\ntry again with a different name")
+        except:
+            self.label_welcome['text'] = "An error has occurred, Close the client and try again"
 
 
 if __name__ == '__main__':

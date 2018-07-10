@@ -1,4 +1,6 @@
 import java.net.Socket;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.SocketTimeoutException;
 import java.io.*;
@@ -40,23 +42,15 @@ private static void buildConnections(int port){
 	try {
 		final ServerSocket serverSocket = new ServerSocket(port);
 		serverSocket.setSoTimeout(1000); // to be able to stop blocking now and then
-		System.err.println("Started server on port " + port);
+		System.err.println("Started server on port " + port + " Host: "+ Inet4Address.getLocalHost().getHostAddress());
+
 		while (accepting) {
 			try{
 				Socket clientSocket = serverSocket.accept();
 				InputStream is = clientSocket.getInputStream();
 				Scanner in = new Scanner(new BufferedInputStream(is));
 				PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-
-				String id_name = in.next();
-
-				client_ins.put(id_name,in);
-				client_inps.put(id_name,is);
-				client_outs.put(id_name,out);
-
-				System.err.println("Accepted connection from client " + id_name);
-
-				
+				String id_name = in.next();				
 				
 				File file = new File("uno.txt");
 		        BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -64,7 +58,7 @@ private static void buildConnections(int port){
 		        Boolean alreadyIdle = false;
 		      
 		        while((line = reader.readLine()) != null){
-		            if(line.startsWith("<OnlinePlayer name='" + id_name)){
+		            if(line.startsWith("<OnlinePlayer name='" + id_name + "' status=")){
 		            	alreadyIdle = true;
 		            	break;
 		            }
@@ -72,17 +66,22 @@ private static void buildConnections(int port){
 		        reader.close();
 		        
 		        if(alreadyIdle){
+		        	System.err.println("<Refused connection: " + id_name +" is taken/>");
 					out.println("<Refused connection: " + id_name +" is taken/>");
 					out.flush();
+					// clientSocket.close();
 		        }else{
+					System.err.println("Accepted connection from client " + id_name);
+					client_ins.put(id_name,in);
+					client_inps.put(id_name,is);
+					client_outs.put(id_name,out);
+					
 			        FileWriter writer = new FileWriter("uno.txt",true);
 			        writer.write("<OnlinePlayer name='" + id_name + "' status='idle'/>\n");
 			        writer.close();
 					out.println("<Accepted connection from " + id_name +"/>");
 					out.flush();
 		        }
-		        
-
 
 			}catch(SocketTimeoutException e){}
 
@@ -132,6 +131,8 @@ private static void buildConnections(int port){
 				}else if(s.startsWith("<UpdateLists/>")){
 					System.out.println(clientName + " asks to update the lists (onlinePlayers and Games)");
 					UpdateLists(s, out);
+				}else{
+					out.flush();
 				}
 			}
 		}

@@ -1,2 +1,6 @@
 <Uno Multi Game Online Game>
-<OnlinePlayer name='Mujtaba' status='idle'/>
+<OnlinePlayer name='mujaa' status='idle'/>
+<OnlinePlayer name='aaa' status='idle'/>
+<OnlinePlayer name='mujtaa' status='idle'/>
+<OnlinePlayer name='mujtaan' status='idle'/>
+<OnlinePlayer name='askdjhasd' status='idle'/>

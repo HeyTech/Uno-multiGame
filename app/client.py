@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
 import socket
+import errno
 import sys
 
 s = None
-print('# Creating socket')
-try:
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-except socket.error:
-    print('Failed to create socket')
 
 
 def login_to_game(host, user_name):
@@ -15,7 +11,12 @@ def login_to_game(host, user_name):
 
     player_name = user_name+ " / HTTP/1.0\r\n\r\n"
     # create socket
-
+    print('# Creating socket')
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(5)
+    except socket.error:
+        print('Failed to create socket')
 
     print('# Getting remote IP address')
     try:
@@ -25,26 +26,33 @@ def login_to_game(host, user_name):
         #sys.exit()
         return False
 
-    # Connect to remote server
-    print('# Connecting to server, ' + host + ' (' + remote_ip + ')')
-    s.connect((remote_ip, port))
-
-    # Send data to remote server
-    print('# Sending data to server')
-
     try:
+        # Connect to remote server
+        print('# Connecting to server, ' + host + ' (' + remote_ip + ')')
+        s.connect((remote_ip, port))
+
+    except socket.error as serr:
+        print(serr)
+        if serr.errno == errno.EISCONN:
+            print("{}".format(serr))
+            s.close()
+            # sys.exit()
+        else:
+            raise serr
+    try:
+        # Send data to remote server
+        print('# Sending data to server')
         s.sendall(player_name.encode())
-    except socket.error:
-        print('Send failed')
-        #sys.exit()
+        # Receive data
+        print('# Receive data from server')
+        reply = s.recv(4096)
+
+        print(reply)
+        return reply
+
+    except socket.error as e:
+        print("Error creating socket: {}".format(e))
         return False
-
-    # Receive data
-    print('# Receive data from server')
-    reply = s.recv(4096)
-
-    print(reply)
-    return reply
 
 
 def send_server_request(command):
@@ -62,19 +70,3 @@ def send_server_request(command):
 
     print(reply)
     return reply
-
-# namn = input("namn: ")
-# print("------", namn)
-# login_to_game('192.168.233.164', str(namn))
-# send_server_request("<CreateRoom Name='bla' Mode='single' Capacity='1/10' Players='username'/>")
-
-"""
-while (1):
-    print('# Receive data from server')
-    reply = s.recv(4096)
-    print(reply)
-"""
-
-
-
-

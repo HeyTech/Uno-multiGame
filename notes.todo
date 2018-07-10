@@ -1,5 +1,4 @@
 Uno Multi-Gane:
-  ☐ create update list (that update online and current games)
   ☐ what happens when player leave game (maybe player class??)
   ☐ leave room
 
@@ -9,9 +8,9 @@ Uno Multi-Gane:
    **<CreateRoom Name="bla" Mode="2v2" Capacity="1/4" Players='username'/>**
  ✔ Save Room @done (18-07-08 16:27)
    **<Room Name='bla' Mode='single' Capacity='1/10' Players='username'/>**
- ☐ Update lists
+ ✔ create update list (that update online and current games) @done (18-07-10 10:26)
   string = "'Online players':['Mujtaba playing', 'Nandu playing', 'Ranju ready'] - 'Rooms Created': {'name1 2v2 2/4', 'name2 2v2 4/4', 'name3 single 2/10'}"
-
+ ☐ json String from Java to python
 
 
 Fix:
