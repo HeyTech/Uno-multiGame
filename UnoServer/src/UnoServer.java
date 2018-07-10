@@ -130,12 +130,62 @@ private static void buildConnections(int port){
 				}else if(s.startsWith("<UpdateLists/>")){
 					System.out.println(clientName + " asks to update the lists (onlinePlayers and Games)");
 					UpdateLists(s, out);
+				}else if(s.startsWith("<JoinRoom ")){
+					String[] a = s.replace("' '", "'").split("'");
+					System.out.println(clientName + " asks to join room: " + a[1]);
+					String roomName = a[1];
+					String playerName = a[2];
+					JoinRoom(playerName, roomName, out);
 				}else{
 					out.flush();
 				}
 			}
 		}
 	}
+
+private static void JoinRoom(String playerName, String roomName, PrintWriter out) {
+	try
+    {
+        File file = new File("uno.txt");
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line = "", text = "";
+        int rdy, cap = 0;
+      
+        while((line = reader.readLine()) != null){
+        	if(line.startsWith("<Room Name='" +roomName +"'")){
+        		String[] b = line.split("'");
+        		rdy = Integer.parseInt(b[5].split("/")[0]);
+        		cap = Integer.parseInt(b[5].split("/")[1]);
+        		
+        		if(rdy < cap){
+        			line = line.replace((rdy +"/"+cap).toString(), ((rdy+1) +"/"+cap).toString());
+        			line = line.replaceAll("'/>", ", " + playerName + "'/>");
+        	        out.println("<Join Room Successfully/>");
+        	        out.flush();
+        		}else{
+        	        out.println("<Join Room Failed: Room "+ roomName +" is already full />");
+        	        out.flush();
+        		}
+    			text += line  + "\n";
+        	}
+        	else{
+        		text += line  + "\n";
+        	}
+        	
+        }
+        reader.close();
+        
+        
+        FileWriter writer = new FileWriter("uno.txt");
+        writer.write(text);
+        writer.close();
+    }
+    catch (IOException ioe)
+    {
+        ioe.printStackTrace();
+    }
+		
+}
 
 private static void UpdateLists(String s, PrintWriter out) {
 
@@ -187,7 +237,7 @@ private static  String CreatedGames(String createdGames){
         String line = "";
         while((line = reader.readLine()) != null){
        	 if(line.startsWith(createdGames)){
-         	//String roomsCreated= "<Room Name='bla' Mode='single' Capacity='1/10' Players='username'/>";
+         	//String roomsCreated= "<RoomName='bla' Mode='single' Capacity='1/10' Players='username'/>";
         	String[] temp = line.split("'");
         	String room = String.join(" ", temp[1], temp[3], temp[5]);
         	roomCreated += "'" + room + "'";
