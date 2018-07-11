@@ -109,10 +109,7 @@ for i, filename in enumerate(os.listdir(folder_path)):
           print(newname)
           os.rename(folder_path + str('/') + filename, folder_path + str('/') + newname)
 
-    elif 'card_back_alt' in filename:
-          newname = filename.replace('card_back_alt','cba')
-          print(newname)
-          os.rename(folder_path + str('/') + filename, folder_path + str('/') + newname)
+
 
 
 
