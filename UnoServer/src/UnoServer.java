@@ -136,9 +136,12 @@ private static void buildConnections(int port){
 					String roomName = a[1];
 					String playerName = a[2];
 					JoinRoom(playerName, roomName, out);
-				}else{
+				}
+				/*
+				 else{
 					out.flush();
 				}
+				*/
 			}
 		}
 	}
