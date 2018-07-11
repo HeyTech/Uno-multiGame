@@ -120,7 +120,6 @@ private static void buildConnections(int port){
 				if(s.startsWith("<ReadyToPlay/>")) {
 					System.out.println(clientName + " is now online.");
 					ReadyToPlay(clientName, out);
-					out.flush();
 				}else if(s.startsWith("<Exit/>")) {
 					System.out.println(clientName + " left the game.");
 					LeaveGame(clientName, s, out);
@@ -138,9 +137,14 @@ private static void buildConnections(int port){
 					JoinRoom(playerName, roomName, out);
 				}
 				/*
-				 else{
-					out.flush();
-				}
+				try{
+					for(int k = 0; i < outs.size(); k++){
+						PrintWriter send = outs.get(k);
+						String msg = clientName + " did some action";
+						send.print(msg);
+						send.flush();
+					}	
+				}catch(Exception ioe){continue;}
 				*/
 			}
 		}
@@ -262,11 +266,14 @@ private static  String CreatedGames(String createdGames){
 private static void CreateRoom(String s, PrintWriter out) {
     try
     {
-    	//String xmlString = "<CreateRoom Name='bla' Mode='single' Capacity='1/10' Players='username'/>";
-    	String[] xmlarray = s.replace("/>", " ").replace("<CreateRoom ", "").split(" ");
-    	Arrays.toString(xmlarray);
-    	String room = "<Room " + String.join(" ", xmlarray) + "/>";
-    	System.out.println(room);	
+    	//String s = "<CreateRoom Name='bla' Mode='single' Capacity='1/10' Players='username'/>";
+    	//s = "<CreateRoom Name='  232  34 234 ' Mode='Single' Capacity='1/10' Player='488'/>";
+    	String temp = s.replace("/>", "").replace("<CreateRoom ", "");
+    	String roomName = temp.split(" Mode='")[0];
+    	System.out.println(roomName);
+    	
+    	String room = "<Room " +temp  + "/>";
+    	System.out.println(room);
     	
     	
         File file = new File("uno.txt");
@@ -276,7 +283,7 @@ private static void CreateRoom(String s, PrintWriter out) {
         
         while((line = reader.readLine()) != null)
         {
-        	if(line.startsWith("<Room " + xmlarray[0])){
+        	if(line.startsWith("<Room " + roomName)){
         		nameNotFound = false;
         		break;
         	}

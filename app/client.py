@@ -11,7 +11,7 @@ class Socket_class(object):
         print('# Creating socket')
         try:
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.s.settimeout(5)
+            self.s.settimeout(10)
             print('# Done Creating socket')
         except socket.error:
             print('Failed to create socket')
