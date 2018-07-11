@@ -157,6 +157,7 @@ class Application(tk.Frame):
         self.player_list_name.pack()
         self.player_list = tk.Listbox(self.player_list_frame)
 
+
         self.update_btn = tk.Button(self, text="Update", command=self.update_list)
         self.update_btn.pack(side="bottom")
         self.create_btn = tk.Button(self, text="Create Room", command=self.create_room)
@@ -171,13 +172,25 @@ class Application(tk.Frame):
             try:
                 r = self.game_list.curselection()[0]
                 # print(r)
-                self.game_list_selected = self.game_mode_list[r]
-                # print(self.game_list_selected)
-                self.game_label.config(text=self.game_list_selected)
+                game_list_selected = self.game_mode_list[r]
+                print(game_list_selected)
+                self.game_label.config(text=game_list_selected)
                 self.game_label.pack()
+                splitted_name = game_list_selected.split(' ')
+                to_join_room = splitted_name[0]
+                print(splitted_name)
+                new_command = "<JoinRoom '" + str(to_join_room) + "' '" + str(self.player_name) + "'/>"
+                print("Command: " + new_command)
+                join_room = (self.client.send_server_request(new_command)).decode()
+                self.join_label = tk.Label(self, text=join_room)
+                print(join_room)
+                self.join_label.pack()
+
+
             except:
                 pass
         self.game_list.bind("<<ListboxSelect>>", get_game_mode)
+
 
         def get_player(*x):
             try:
