@@ -87,7 +87,9 @@ private static void buildConnections(int port) throws JSONException{
 					out.flush();
 		        }
 
-			}catch(SocketTimeoutException e){}
+			}catch(SocketTimeoutException e){
+				continue;
+			}
 
 			//Listen to connected clients
 			if(client_ins.size()>0)
@@ -140,7 +142,16 @@ private static void buildConnections(int port) throws JSONException{
 					String roomName = a[1];
 					String playerName = a[2];
 					JoinRoom(playerName, roomName, out);
+				}else if(s.startsWith("<ChooseTeam ")){
+					ChooseTeam(s, out);
+					//TODO: InformPlayers()     //*******************************************************
+					
+				}else if(s.startsWith("<GettingReady ")){
+					GettingReady(s, out);
+										// InformPlayers()
 				}
+				
+				
 				/*
 				try{
 					for(int k = 0; i < outs.size(); k++){
@@ -155,6 +166,39 @@ private static void buildConnections(int port) throws JSONException{
 		}
 	}
 
+private static void GettingReady(String s, PrintWriter out) {
+	//String s = "<ChooseTeam 'RoomName' 'UserName' 'teamA'/>";
+	String[] a = s.replace("' '", "'").split("'");
+	String roomFile = a[1]+".txt";
+	String playerName = a[2];
+	
+	JsonFormater cls = new JsonFormater();					
+	JSONObject obj = cls.PlayerGettingReady(roomFile, playerName);
+
+	JSONObject tempJson = new JSONObject();
+	tempJson.put("RoomInfo", obj.get("RoomInfo"));
+	out.print(tempJson);
+    out.flush();
+		
+	}
+
+private static void ChooseTeam(String s, PrintWriter out) {
+	//String s = "<ChooseTeam 'RoomName' 'UserName' 'teamA'/>";
+	String[] a = s.replace("' '", "'").split("'");
+	String roomFile = a[1]+".txt";
+	String playerName = a[2];
+	String teamName = a[3];
+	
+	JsonFormater cls = new JsonFormater();
+	JSONObject obj = cls.ChangePlayerTeam(roomFile, playerName, teamName);
+
+	JSONObject tempJson = new JSONObject();
+	tempJson.put("RoomInfo", obj.get("RoomInfo"));
+	out.print(tempJson);
+    out.flush();
+		
+	}
+
 private static void JoinRoom(String playerName, String roomName, PrintWriter out) {
 	try
     {
@@ -164,9 +208,11 @@ private static void JoinRoom(String playerName, String roomName, PrintWriter out
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = "", text = "";
         int rdy, cap = 0;
+        boolean roomNotFound = true;
       
         while((line = reader.readLine()) != null){
         	if(line.startsWith("<Room Name='" +roomName +"'")){
+        		roomNotFound = false;
         		String[] b = line.split("'");
         		rdy = Integer.parseInt(b[5].split("/")[0]);
         		cap = Integer.parseInt(b[5].split("/")[1]);
@@ -183,17 +229,18 @@ private static void JoinRoom(String playerName, String roomName, PrintWriter out
         			
         			try (FileWriter gameFile = new FileWriter(roomName+".txt")) {
         				gameFile.write(newObj.toString());
-        				System.out.println("Successfully Copied JSON Object to File...");
-        				System.out.println("JSON Object: " + newObj);
+        				System.out.println("Successfully join room: "+ newObj);
+        				//System.out.println("JSON Object: " + newObj);
         			}
         			
         			//out.println("<Join Room Successfully/>");
-        			out.print(newObj.get("RoomInfo"));
+        			JSONObject tempJson = new JSONObject();
+        			tempJson.put("RoomInfo", newObj.get("RoomInfo"));
+        			out.print(tempJson);
         	        out.flush();
-        	        // ************************************************************
         	        
         		}else{
-        	        out.println("<Join Room Failed: Room "+ roomName +" is already full />");
+        	        out.print("<Join Room Failed: Room "+ roomName +" is already full />");
         	        out.flush();
         		}
     			text += line  + "\n";
@@ -203,6 +250,12 @@ private static void JoinRoom(String playerName, String roomName, PrintWriter out
         	}
         	
         }
+        
+        if(roomNotFound){
+        	out.print("<Join Room Failed: Room "+ roomName +" dose not exist />");
+	        out.flush();
+        }
+        
         reader.close();
         
         
@@ -261,6 +314,7 @@ private static JSONArray OnlinePlayers(String onlinePlayers){
          return playersOnline;
      }
 
+// returns the games that are created to <UpdateLists>
 private static  JSONArray CreatedGames(String createdGames){
 	JSONArray roomCreated = new JSONArray();
 
@@ -306,11 +360,10 @@ private static void CreateRoom(String s, PrintWriter out) throws JSONException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = "";
         Boolean nameNotFound = true;
-        
         // check if the room name already exist
         while((line = reader.readLine()) != null)
         {
-        	if(line.startsWith("<Room " + roomName)){
+        	if(line.startsWith("<Room Name='" + roomName +"'")){
         		nameNotFound = false;
         		break;
         	}
@@ -330,9 +383,12 @@ private static void CreateRoom(String s, PrintWriter out) throws JSONException {
     		JSONObject room = cls.generateRoomJson(roomName, mode, online, admin);
     		try (FileWriter gameFile = new FileWriter(roomName+".txt")) {
     			gameFile.write(room.toString());
-    			System.out.println("Successfully Copied JSON Object to File: " + room);
+    			System.out.println("Successfully Created Room: " + room);
     			gameFile.close();
-    			out.print(room.get("RoomInfo"));
+    			
+    			JSONObject tempJson = new JSONObject();
+    			tempJson.put("RoomInfo", room.get("RoomInfo"));
+    			out.print(tempJson);
     		}
         }else{
         	out.println("<GameRoom Failed: Name taken/>");
