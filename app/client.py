@@ -11,7 +11,7 @@ class Socket_class(object):
         print('# Creating socket')
         try:
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.s.settimeout(10)
+            self.s.settimeout(5)
             print('# Done Creating socket')
         except socket.error:
             print('Failed to create socket')
@@ -67,8 +67,11 @@ class Socket_class(object):
             # sys.exit()
             return False
 
-        # Receive data
-        print('# Receive data from server')
-        reply = self.s.recv(4096)
-        print(reply)
-        return reply
+        try:
+            # Receive data
+            print('# Receive data from server')
+            reply = self.s.recv(4096)
+            return reply
+        except socket.error:
+            print('Time out, failed to receive date from Server ')
+            pass

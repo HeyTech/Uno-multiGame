@@ -13,13 +13,14 @@ public class JsonFormater {
 	static JSONObject generateRoomJson(String roomName, String mode, String online, String admin) {
 
 		JSONObject obj = new JSONObject();
-		
+
 		// To generate RoomInfo
 		JSONObject roomInfo = new JSONObject();
 		roomInfo.put("RoomName", roomName);
 		roomInfo.put("Mode", mode);
 		roomInfo.put("Online", online);
 		roomInfo.put("Admin", admin);
+		roomInfo.put("GameStarted", false);
 
 		// only if 2v2
 		JSONArray teamA = new JSONArray();
@@ -33,30 +34,30 @@ public class JsonFormater {
 
 		JSONArray readyPlayers = new JSONArray();
 		roomInfo.put("ReadyPlayers", readyPlayers);
-		
+
 		JSONArray players = new JSONArray();
 		players.add(admin); // Just to put the admin as online player
 		roomInfo.put("Players", players);
 
-		
-		
+
+
 		// To Generate BoardInfo
 		JSONObject boardInfo = new JSONObject();
 		boardInfo.put("OpenCard", "");
 		boardInfo.put("CurrentTurn", "");
 		boardInfo.put("NextTurn", "");
 		boardInfo.put("Blocked", "");
-		
+
 		boardInfo.put("TurnTime", new Integer(10));
-		
+
 		JSONObject playersInfo = new JSONObject();
 
 		JSONObject p1 = GeneratePlayerCards(admin, new JSONArray() ,0);
 		playersInfo.put(admin, p1); // p1 name
-		
+
 		boardInfo.put("PlayersInfo", playersInfo);
-		
-		
+
+
 		obj.put("RoomInfo", roomInfo);
 		obj.put("BoardInfo", boardInfo);
 		obj.put("AvailableCards", new JSONArray());
@@ -69,7 +70,7 @@ public class JsonFormater {
 		pObj.put("Score", score);
 		pObj.put("Uno", false);
 		pObj.put("NumberOfCards", cards.size());
-		
+
 		return pObj;
 	}
 
@@ -83,15 +84,15 @@ public class JsonFormater {
 			roomInfo.put("Online", newCap);
 			JSONArray players = (JSONArray) roomInfo.get("Players");
 			players.add(playerName);
-			
-			
+
+
 			JSONObject boardInfo = (JSONObject) newObj.get("BoardInfo");
 			JSONObject playersInfo = (JSONObject) boardInfo.get("PlayersInfo");
 			JSONObject p2 = GeneratePlayerCards(playerName, new JSONArray() ,0);
 			playersInfo.put(playerName, p2); // p1 name
-			
-			
-			
+
+
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -101,8 +102,8 @@ public class JsonFormater {
 		}
 		return obj;
 	}
-	
-	
+
+
 	public JSONObject ChangePlayerTeam(String roomFile, String playerName, String teamName) {
 		JSONParser parser = new JSONParser();
 		JSONObject obj = null;
@@ -113,12 +114,12 @@ public class JsonFormater {
 			JSONObject teams = (JSONObject) roomInfo.get("Teams");
 			JSONArray team = (JSONArray) teams.get(teamName);
 			JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");
-			
+
 			if(team.toString().contains(playerName)){
 				team.remove(playerName);
 				readyPlayers.remove(playerName);
 			}else{
-				
+
 				// Check if the player is added in the other team
 				String otherTeamName = "";
 				if(teamName.equals("TeamA")){
@@ -126,7 +127,7 @@ public class JsonFormater {
 				}else{
 					otherTeamName = "TeamA";
 				}
-				
+
 				JSONArray otherTeam = (JSONArray) teams.get(otherTeamName);
 
 				if(otherTeam.toString().contains(playerName)){
@@ -137,7 +138,7 @@ public class JsonFormater {
 			}
 
 			updateGameFile(obj, roomFile);
-			
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -157,8 +158,8 @@ public class JsonFormater {
 			JSONObject roomInfo = (JSONObject) newObj.get("RoomInfo");
 			String mode = (String) roomInfo.get("Mode");
 			JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");
-			
-			
+
+
 			if(readyPlayers.toString().contains(playerName)){
 				readyPlayers.remove(playerName);
 			}else{
@@ -174,10 +175,10 @@ public class JsonFormater {
 					readyPlayers.add(playerName);
 				}
 			}
-			
-			
+
+
 			updateGameFile(obj, roomFile);
-			
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -194,10 +195,22 @@ public class JsonFormater {
 			// System.out.println("Successfully Copied JSON Object to File...");
 			// System.out.println("JSON Object: " + obj);
 		}
-		
+
 	}
 
-	
+	public JSONObject FetchGameInfo(String roomName) {
+		JSONParser parser = new JSONParser();
+		JSONObject obj = null;
+		try {
+			obj = (JSONObject) parser.parse(new FileReader(roomName+".txt"));
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+		}
+
+		return obj;
+	}
+
+
 
 
 }
