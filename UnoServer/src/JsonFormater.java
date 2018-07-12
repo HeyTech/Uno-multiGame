@@ -82,7 +82,15 @@ public class JsonFormater {
 			JSONObject roomInfo = (JSONObject) newObj.get("RoomInfo");
 			roomInfo.put("Online", newCap);
 			JSONArray players = (JSONArray) roomInfo.get("Players");
-			players.add(playerName);			
+			players.add(playerName);
+			
+			
+			JSONObject boardInfo = (JSONObject) newObj.get("BoardInfo");
+			JSONObject playersInfo = (JSONObject) boardInfo.get("PlayersInfo");
+			JSONObject p2 = GeneratePlayerCards(playerName, new JSONArray() ,0);
+			playersInfo.put(playerName, p2); // p1 name
+			
+			
 			
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -107,8 +115,30 @@ public class JsonFormater {
 			JSONObject roomInfo = (JSONObject) newObj.get("RoomInfo");
 			JSONObject teams = (JSONObject) roomInfo.get("Teams");
 			JSONArray team = (JSONArray) teams.get(teamName);
-			team.add(playerName);
+			JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");
 			
+			if(team.toString().contains(playerName)){
+				team.remove(playerName);
+				readyPlayers.remove(playerName);
+			}else{
+				
+				// Check if the player is added in the other team
+				String otherTeamName = "";
+				if(teamName.equals("TeamA")){
+					otherTeamName = "TeamB";
+				}else{
+					otherTeamName = "TeamA";
+				}
+				
+				JSONArray otherTeam = (JSONArray) teams.get(otherTeamName);
+
+				if(otherTeam.toString().contains(playerName)){
+					otherTeam.remove(playerName);
+				}
+				team.add(playerName);
+				readyPlayers.remove(playerName);
+			}
+
 			updateGameFile(obj, roomFile);
 			
 		} catch (FileNotFoundException e) {
@@ -129,11 +159,15 @@ public class JsonFormater {
 			JSONObject newObj = (JSONObject) obj;
 			JSONObject roomInfo = (JSONObject) newObj.get("RoomInfo");
 			JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");
-			if(Arrays.asList(readyPlayers).contains(playerName)){
+			
+			
+			if(readyPlayers.toString().contains(playerName)){
 				readyPlayers.remove(playerName);
+				
 			}else{
 				readyPlayers.add(playerName);
 			}
+			
 			
 			updateGameFile(obj, roomFile);
 			
@@ -153,8 +187,8 @@ public class JsonFormater {
 	private void updateGameFile(JSONObject obj, String roomFile) throws IOException {
 		try (FileWriter gameFile = new FileWriter(roomFile)) {
 			gameFile.write(obj.toString());
-			System.out.println("Successfully Copied JSON Object to File...");
-			System.out.println("JSON Object: " + obj);
+			// System.out.println("Successfully Copied JSON Object to File...");
+			// System.out.println("JSON Object: " + obj);
 		}
 		
 	}
