@@ -217,7 +217,9 @@ private static void JoinRoom(String playerName, String roomName, PrintWriter out
         			}
         			
         			//out.println("<Join Room Successfully/>");
-        			out.print(newObj.get("RoomInfo"));
+        			JSONObject tempJson = new JSONObject();
+        			tempJson.put("RoomInfo", newObj.get("RoomInfo"));
+        			out.print(tempJson);
         	        out.flush();
         	        // ************************************************************
         	        
@@ -361,7 +363,10 @@ private static void CreateRoom(String s, PrintWriter out) throws JSONException {
     			gameFile.write(room.toString());
     			System.out.println("Successfully Copied JSON Object to File: " + room);
     			gameFile.close();
-    			out.print(room.get("RoomInfo"));
+    			
+    			JSONObject tempJson = new JSONObject();
+    			tempJson.put("RoomInfo", room.get("RoomInfo"));
+    			out.print(tempJson);
     		}
         }else{
         	out.println("<GameRoom Failed: Name taken/>");
