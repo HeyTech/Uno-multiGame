@@ -87,9 +87,7 @@ private static void buildConnections(int port) throws JSONException{
 					out.flush();
 		        }
 
-			}catch(SocketTimeoutException e){
-				continue;
-			}
+			}catch(SocketTimeoutException e){}
 
 			//Listen to connected clients
 			if(client_ins.size()>0)
@@ -145,7 +143,6 @@ private static void buildConnections(int port) throws JSONException{
 				}else if(s.startsWith("<ChooseTeam ")){
 					ChooseTeam(s, out);
 					//TODO: InformPlayers()     //*******************************************************
-					
 				}else if(s.startsWith("<GettingReady ")){
 					GettingReady(s, out);
 										// InformPlayers()
