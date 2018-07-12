@@ -7,12 +7,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-/* 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
- */
-
 public class JsonFormater {
 	static JSONObject generateRoomJson(String roomName, String mode, String online, String admin) {
 
