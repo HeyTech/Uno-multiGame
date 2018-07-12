@@ -87,7 +87,9 @@ private static void buildConnections(int port) throws JSONException{
 					out.flush();
 		        }
 
-			}catch(SocketTimeoutException e){}
+			}catch(SocketTimeoutException e){
+				continue;
+			}
 
 			//Listen to connected clients
 			if(client_ins.size()>0)
