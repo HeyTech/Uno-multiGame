@@ -155,14 +155,24 @@ public class JsonFormater {
 			obj = (JSONObject) parser.parse(new FileReader(roomFile));
 			JSONObject newObj = (JSONObject) obj;
 			JSONObject roomInfo = (JSONObject) newObj.get("RoomInfo");
+			String mode = (String) roomInfo.get("Mode");
 			JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");
 			
 			
 			if(readyPlayers.toString().contains(playerName)){
 				readyPlayers.remove(playerName);
-				
 			}else{
-				readyPlayers.add(playerName);
+				if((mode.toLowerCase()).equals("2v2")){
+					// check first if player has choosen a team
+					JSONObject teams = (JSONObject) roomInfo.get("Teams");
+					JSONArray teamA = (JSONArray) teams.get("TeamA");
+					JSONArray teamB = (JSONArray) teams.get("TeamB");
+					if(teamA.toString().contains(playerName) || teamB.toString().contains(playerName)){
+						readyPlayers.add(playerName);
+					}
+				}else{
+					readyPlayers.add(playerName);
+				}
 			}
 			
 			
