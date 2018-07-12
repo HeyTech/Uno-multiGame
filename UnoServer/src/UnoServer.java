@@ -5,6 +5,11 @@ import java.net.SocketTimeoutException;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Scanner;
+
+import org.json.JSONException;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -20,7 +25,7 @@ public class UnoServer {
 	private static HashMap<String,InputStream> client_inps = new HashMap<String,InputStream>();
 	private static HashMap<String,PrintWriter> client_outs = new HashMap<String,PrintWriter>();
 
-	public static void main(String[] args)throws java.io.FileNotFoundException, java.io.IOException  {
+	public static void main(String[] args)throws java.io.FileNotFoundException, java.io.IOException, JSONException  {
 		int port = 4444;
 
 		FileWriter writer = new FileWriter("uno.txt", false);
@@ -30,7 +35,7 @@ public class UnoServer {
 		buildConnections(port);
 	}
 
-private static void buildConnections(int port){
+private static void buildConnections(int port) throws JSONException{
 	new Thread(new Runnable(){
 		public void run(){
 			stdIn.nextLine();
@@ -91,7 +96,7 @@ private static void buildConnections(int port){
 	} catch (IOException ioe) { System.err.println("here" + ioe); }
 }
 
-	private static void ManageGame() throws java.io.IOException{
+	private static void ManageGame() throws java.io.IOException, JSONException{
 
 
 		ArrayList<String> theClients    = new  ArrayList<String>(client_ins.keySet());
@@ -153,6 +158,8 @@ private static void buildConnections(int port){
 private static void JoinRoom(String playerName, String roomName, PrintWriter out) {
 	try
     {
+		JsonFormater cls = new JsonFormater();
+
         File file = new File("uno.txt");
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = "", text = "";
@@ -167,8 +174,24 @@ private static void JoinRoom(String playerName, String roomName, PrintWriter out
         		if(rdy < cap){
         			line = line.replace((rdy +"/"+cap).toString(), ((rdy+1) +"/"+cap).toString());
         			line = line.replaceAll("'/>", ", " + playerName + "'/>");
-        	        out.println("<Join Room Successfully/>");
+        	        
+        			// Save to file ****************************************
+        			String roomFile = roomName +".txt";
+        			
+        			JSONObject newObj = cls.AddNewPlayerToRoom(roomFile, playerName, ((rdy+1) +"/"+cap).toString());
+        			System.out.println(newObj);
+        			
+        			try (FileWriter gameFile = new FileWriter(roomName+".txt")) {
+        				gameFile.write(newObj.toString());
+        				System.out.println("Successfully Copied JSON Object to File...");
+        				System.out.println("JSON Object: " + newObj);
+        			}
+        			
+        			//out.println("<Join Room Successfully/>");
+        			out.print(newObj.get("RoomInfo"));
         	        out.flush();
+        	        // ************************************************************
+        	        
         		}else{
         	        out.println("<Join Room Failed: Room "+ roomName +" is already full />");
         	        out.flush();
@@ -194,22 +217,27 @@ private static void JoinRoom(String playerName, String roomName, PrintWriter out
 		
 }
 
-private static void UpdateLists(String s, PrintWriter out) {
+private static void UpdateLists(String s, PrintWriter out) throws JSONException {
 
-	String plyersOnline = OnlinePlayers("<OnlinePlayer");
-	System.out.println(plyersOnline);
+    JSONObject obj = new JSONObject();
+
 	
-	String roomsCreated = CreatedGames("<Room ");
-	System.out.println(plyersOnline);
-
-	String sendOut = plyersOnline.replace("''", "', '") + " - " +roomsCreated.replace("''", "', '");
-	out.print(sendOut);
+	JSONArray plyersOnline = OnlinePlayers("<OnlinePlayer");
+	//System.out.println(plyersOnline);
+	obj.put("Online players", plyersOnline);
+	
+	
+	JSONArray roomsCreated = CreatedGames("<Room ");
+	//System.out.println(plyersOnline);
+	obj.put("Rooms Created", roomsCreated);
+	
+	out.print(obj);
 	out.flush();
 }
 
 
-private static  String OnlinePlayers(String onlinePlayers){
-	     String plyersOnline = "'Online players':[";
+private static JSONArray OnlinePlayers(String onlinePlayers){
+		JSONArray playersOnline = new JSONArray();
          try
              {
              File file = new File("uno.txt");
@@ -219,24 +247,23 @@ private static  String OnlinePlayers(String onlinePlayers){
             	 if(line.startsWith(onlinePlayers)){
             		 // String onlinePlayers= "<OnlinePlayer name='mujtaba' status='idle'/>";
             		 String[] temp = line.split("'");
-            		 String player = String.join(" ", temp[1], temp[3]);
-            		 plyersOnline += "'"+player+"'";
-            		 //System.out.println(player);            	 
+            		 //System.out.println(" ", temp[1], temp[3]));            	 
+            		 playersOnline.add(String.join(" ", temp[1], temp[3]));
             	 }
 
              }
              reader.close();
-             plyersOnline += "]";
          }
          catch (IOException ioe)
              {
              ioe.printStackTrace();
          }
-         return plyersOnline;
+         return playersOnline;
      }
 
-private static  String CreatedGames(String createdGames){
-    String roomCreated = "'Rooms Created':[";
+private static  JSONArray CreatedGames(String createdGames){
+	JSONArray roomCreated = new JSONArray();
+
     try
         {
         File file = new File("uno.txt");
@@ -247,13 +274,12 @@ private static  String CreatedGames(String createdGames){
          	//String roomsCreated= "<RoomName='bla' Mode='single' Capacity='1/10' Players='username'/>";
         	String[] temp = line.split("'");
         	String room = String.join(" ", temp[1], temp[3], temp[5]);
-        	roomCreated += "'" + room + "'";
+        	roomCreated.add(room);
         	//System.out.println(room); 
        	 }
 
         }
         reader.close();
-        roomCreated += "]";
     }
     catch (IOException ioe)
         {
@@ -263,24 +289,25 @@ private static  String CreatedGames(String createdGames){
 }
 
 
-private static void CreateRoom(String s, PrintWriter out) {
-    try
-    {
-    	//String s = "<CreateRoom Name='bla' Mode='single' Capacity='1/10' Players='username'/>";
-    	//s = "<CreateRoom Name='  232  34 234 ' Mode='Single' Capacity='1/10' Player='488'/>";
-    	String temp = s.replace("/>", "").replace("<CreateRoom ", "");
-    	String roomName = temp.split(" Mode='")[0];
-    	System.out.println(roomName);
-    	
-    	String room = "<Room " +temp  + "/>";
-    	System.out.println(room);
-    	
-    	
+private static void CreateRoom(String s, PrintWriter out) throws JSONException {
+    try{
+
+		//String s = "<CreateRoom Name='Naai 1123' Mode='2v2' Capacity='1/4' Players='Mona'/>";
+    	String[] sArr = s.replace("/>", "").replace("<CreateRoom ", "").split("'");
+
+		String roomName = sArr[1];
+		String mode = sArr[3];
+		String online = sArr[5];
+		String admin = sArr[7];
+		
+
+		
         File file = new File("uno.txt");
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = "";
         Boolean nameNotFound = true;
         
+        // check if the room name already exist
         while((line = reader.readLine()) != null)
         {
         	if(line.startsWith("<Room " + roomName)){
@@ -290,28 +317,34 @@ private static void CreateRoom(String s, PrintWriter out) {
         }
         reader.close();
         
-        FileWriter writer = new FileWriter("uno.txt",true);
-
-        
         if(nameNotFound){
-            writer.write(room+"\n");
-            out.println("<GameRoom Created/>");
+            FileWriter writer = new FileWriter("uno.txt",true);
+        	String temp = s.replace("/>", "").replace("<CreateRoom ", "");
+        	String tempRoom = "<Room " +temp  + "/>";
+            writer.write(tempRoom+"\n");
+            writer.close();
+
+            
+        	//To generate JSON String
+        	JsonFormater cls = new JsonFormater();
+    		JSONObject room = cls.generateRoomJson(roomName, mode, online, admin);
+    		try (FileWriter gameFile = new FileWriter(roomName+".txt")) {
+    			gameFile.write(room.toString());
+    			System.out.println("Successfully Copied JSON Object to File: " + room);
+    			gameFile.close();
+    			out.print(room.get("RoomInfo"));
+    		}
         }else{
         	out.println("<GameRoom Failed: Name taken/>");
         }
-        writer.close();
         out.flush();
-
     }
     catch (IOException ioe)
     {
         ioe.printStackTrace();
     }
-    
-    
-    
-
 }
+
 
 private static void ReadyToPlay(String clientName, PrintWriter out) throws IOException {
     try
@@ -387,7 +420,6 @@ private static  void LeaveGame(String clientName, String swrite, PrintWriter out
 }
 
 }
-
 
 
 
