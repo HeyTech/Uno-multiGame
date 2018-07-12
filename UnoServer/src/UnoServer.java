@@ -6,6 +6,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Scanner;
 
+import org.json.JSONException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -24,7 +25,7 @@ public class UnoServer {
 	private static HashMap<String,InputStream> client_inps = new HashMap<String,InputStream>();
 	private static HashMap<String,PrintWriter> client_outs = new HashMap<String,PrintWriter>();
 
-	public static void main(String[] args)throws java.io.FileNotFoundException, java.io.IOException{
+	public static void main(String[] args)throws java.io.FileNotFoundException, java.io.IOException, JSONException  {
 		int port = 4444;
 
 		FileWriter writer = new FileWriter("uno.txt", false);
@@ -34,7 +35,7 @@ public class UnoServer {
 		buildConnections(port);
 	}
 
-private static void buildConnections(int port){
+private static void buildConnections(int port) throws JSONException{
 	new Thread(new Runnable(){
 		public void run(){
 			stdIn.nextLine();
@@ -95,7 +96,7 @@ private static void buildConnections(int port){
 	} catch (IOException ioe) { System.err.println("here" + ioe); }
 }
 
-	private static void ManageGame() throws java.io.IOException{
+	private static void ManageGame() throws java.io.IOException, JSONException{
 
 
 		ArrayList<String> theClients    = new  ArrayList<String>(client_ins.keySet());
@@ -216,7 +217,7 @@ private static void JoinRoom(String playerName, String roomName, PrintWriter out
 		
 }
 
-private static void UpdateLists(String s, PrintWriter out) {
+private static void UpdateLists(String s, PrintWriter out) throws JSONException {
 
     JSONObject obj = new JSONObject();
 
@@ -288,7 +289,7 @@ private static  JSONArray CreatedGames(String createdGames){
 }
 
 
-private static void CreateRoom(String s, PrintWriter out) {
+private static void CreateRoom(String s, PrintWriter out) throws JSONException {
     try{
 
 		//String s = "<CreateRoom Name='Naai 1123' Mode='2v2' Capacity='1/4' Players='Mona'/>";
