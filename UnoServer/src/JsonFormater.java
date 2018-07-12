@@ -1,6 +1,8 @@
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -17,6 +19,7 @@ public class JsonFormater {
 		roomInfo.put("RoomName", roomName);
 		roomInfo.put("Mode", mode);
 		roomInfo.put("Online", online);
+		roomInfo.put("Admin", admin);
 
 		// only if 2v2
 		JSONArray teamA = new JSONArray();
@@ -28,16 +31,22 @@ public class JsonFormater {
 		roomInfo.put("Teams", teams);
 		// end of 2v2
 
+		JSONArray readyPlayers = new JSONArray();
+		roomInfo.put("ReadyPlayers", readyPlayers);
+		
 		JSONArray players = new JSONArray();
-		players.add(admin);
+		players.add(admin); // Just to put the admin as online player
 		roomInfo.put("Players", players);
 
+		
 		
 		// To Generate BoardInfo
 		JSONObject boardInfo = new JSONObject();
 		boardInfo.put("OpenCard", "");
 		boardInfo.put("CurrentTurn", "");
 		boardInfo.put("NextTurn", "");
+		boardInfo.put("Blocked", "");
+		
 		boardInfo.put("TurnTime", new Integer(10));
 		
 		JSONObject playersInfo = new JSONObject();
@@ -58,6 +67,7 @@ public class JsonFormater {
 		JSONObject pObj = new JSONObject();
 		pObj.put("Cards", cards);
 		pObj.put("Score", score);
+		pObj.put("Uno", false);
 		pObj.put("NumberOfCards", cards.size());
 		
 		return pObj;
@@ -85,6 +95,68 @@ public class JsonFormater {
 			e.printStackTrace();
 		}
 		return obj;
+	}
+	
+	
+	public JSONObject ChangePlayerTeam(String roomFile, String playerName, String teamName) {
+		JSONParser parser = new JSONParser();
+		JSONObject obj = null;
+		try {
+			obj = (JSONObject) parser.parse(new FileReader(roomFile));
+			JSONObject newObj = (JSONObject) obj;
+			JSONObject roomInfo = (JSONObject) newObj.get("RoomInfo");
+			JSONObject teams = (JSONObject) roomInfo.get("Teams");
+			JSONArray team = (JSONArray) teams.get(teamName);
+			team.add(playerName);
+			
+			updateGameFile(obj, roomFile);
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return obj;
+	}
+
+	public JSONObject PlayerGettingReady(String roomFile, String playerName) {
+		JSONParser parser = new JSONParser();
+		JSONObject obj = null;
+		try {
+			obj = (JSONObject) parser.parse(new FileReader(roomFile));
+			JSONObject newObj = (JSONObject) obj;
+			JSONObject roomInfo = (JSONObject) newObj.get("RoomInfo");
+			JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");
+			if(Arrays.asList(readyPlayers).contains(playerName)){
+				readyPlayers.remove(playerName);
+			}else{
+				readyPlayers.add(playerName);
+			}
+			
+			updateGameFile(obj, roomFile);
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return obj;
+	}
+
+	private void updateGameFile(JSONObject obj, String roomFile) throws IOException {
+		try (FileWriter gameFile = new FileWriter(roomFile)) {
+			gameFile.write(obj.toString());
+			System.out.println("Successfully Copied JSON Object to File...");
+			System.out.println("JSON Object: " + obj);
+		}
+		
 	}
 
 	

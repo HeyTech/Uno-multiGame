@@ -140,7 +140,36 @@ private static void buildConnections(int port) throws JSONException{
 					String roomName = a[1];
 					String playerName = a[2];
 					JoinRoom(playerName, roomName, out);
+				}else if(s.startsWith("<ChooseTeam ")){
+					//String s = "<ChooseTeam 'RoomName' 'UserName' 'teamA'/>";
+					String[] a = s.replace("' '", "'").split("'");
+					String roomFile = a[1]+".txt";
+					String playerName = a[2];
+					String teamName = a[3];
+					
+					JsonFormater cls = new JsonFormater();
+					JSONObject obj = cls.ChangePlayerTeam(roomFile, playerName, teamName);
+					out.print(obj.get("RoomInfo"));
+					out.flush();
+					
+					//TODO: InformPlayers()     //*******************************************************
+					
+				}else if(s.startsWith("<GettingReady ")){
+					//String s = "<ChooseTeam 'RoomName' 'UserName' 'teamA'/>";
+					String[] a = s.replace("' '", "'").split("'");
+					String roomFile = a[1]+".txt";
+					String playerName = a[2];
+					
+					JsonFormater cls = new JsonFormater();					
+					JSONObject send = cls.PlayerGettingReady(roomFile, playerName);
+					out.print(send.get("RoomInfo"));
+					out.flush();
+					
+					
+					// InformPlayers()
 				}
+				
+				
 				/*
 				try{
 					for(int k = 0; i < outs.size(); k++){
@@ -261,6 +290,7 @@ private static JSONArray OnlinePlayers(String onlinePlayers){
          return playersOnline;
      }
 
+// returns the games that are created to <UpdateLists>
 private static  JSONArray CreatedGames(String createdGames){
 	JSONArray roomCreated = new JSONArray();
 
@@ -306,11 +336,10 @@ private static void CreateRoom(String s, PrintWriter out) throws JSONException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = "";
         Boolean nameNotFound = true;
-        
         // check if the room name already exist
         while((line = reader.readLine()) != null)
         {
-        	if(line.startsWith("<Room " + roomName)){
+        	if(line.startsWith("<Room Name='" + roomName +"'")){
         		nameNotFound = false;
         		break;
         	}
