@@ -189,39 +189,23 @@ class Application(tk.Frame):
         self.player_list.pack(side="right")
 
     def go_to_wait_frame(self, join_room):
-        # print("go to wait frame")
         self.clean_frame()
         decoded_server = json.loads(join_room)["RoomInfo"]
         mode = decoded_server["Mode"]
         players = decoded_server["Players"]
         teams = decoded_server["Teams"]
-        side_waitframe = ["right", "left"]
-        def message_to_server(button_text):
-            if button_text=="Ready":
-                ready_message = "<GettingReady '" + decoded_server["RoomName"] + '\' \'' + self.player_name + '\'/>'
-                self.ready_to_server = (self.client.send_server_request(ready_message)).decode()
-                print(self.ready_to_server)
-            elif 'Team' in button_text:
-                command_to_server_teamselection = "<ChooseTeam '" + decoded_server[
-                    "RoomName"] + '\' \'' + self.player_name + '\' \'' + button_text + '\'/>'
-                # print(command_to_server_teamselection)
-                self.team_join_message = (self.client.send_server_request(command_to_server_teamselection)).decode()
-                print(self.team_join_message)
-        # def getting_ready():
-        #     ready_message = "<GettingReady '" + decoded_server["RoomName"] + '\' \'' + self.player_name + '\'/>'
-        #     print(ready_message)
-        self.ready_button = tk.Button(self, text="Ready", command=message_to_server("Ready"))
+
+        def getting_ready():
+            ready_message = "<GettingReady '" + decoded_server["RoomName"] + '\' \'' + self.player_name + '\'/>'
+            self.ready_message = (self.client.send_server_request(ready_message)).decode()
+            self.go_to_wait_frame(self.ready_message)
+        self.ready_button = tk.Button(self, text="Ready", command=getting_ready)
         self.ready_button.pack(side="bottom")
-        # print(join_room)
-        # decoded_server = json.loads(join_room)["RoomInfo"]
-        # mode = decoded_server["Mode"]
-        # players = decoded_server["Players"]
-        # teams = decoded_server["Teams"]
-        # side_waitframe = ["right", "left"]
-        # def button_team_click(name):
-        #     command_to_server_teamselection = "<ChooseTeam '" + decoded_server["RoomName"] + '\' \'' + self.player_name + '\' \'' + name + '\'/>'
-        #     print(command_to_server_teamselection)
-            # self.team_join_message = (self.client.send_server_request(command_to_server_teamselection)).decode()
+
+        def button_team_click(name):
+            command_to_server_teamselection = "<ChooseTeam '" + decoded_server["RoomName"] + '\' \'' + self.player_name + '\' \'' + name + '\'/>'
+            self.team_join_message = (self.client.send_server_request(command_to_server_teamselection)).decode()
+            self.go_to_wait_frame(self.team_join_message)
         if mode == "Single":
             self.listbox_single = tk.Listbox(self)
             for player in players:
@@ -229,18 +213,18 @@ class Application(tk.Frame):
             self.listbox_single.pack(side="bottom")
         else:
             i = 0
+            side_waitframe = ["right", "left"]
             self.change_team = tk.Button(self, text="Change Team").pack(side="bottom")
             for team in teams:
                 self.team = team
                 team_members = teams[team]
                 self.team_label = tk.LabelFrame(self)
                 self.team_label.pack(side=side_waitframe[i])
-                # print(side_waitframe[i])
-                self.team_name = tk.Button(self.team_label, text=team, command=lambda team=team: message_to_server(team))
-                self.team_name.pack(side="bottom")
+                self.team_name = tk.Button(self.team_label, text=team, command=lambda team=team: button_team_click(team))
+                self.team_name.pack(side='bottom')
                 self.team_members_listbox = tk.Listbox(self.team_label)
-                #for member in team_members:
-                 #   self.team_members_listbox.insert(tk.END, member)
+                for member in team_members:
+                   self.team_members_listbox.insert(tk.END, member)
                 self.team_members_listbox.pack(side="bottom")
                 i +=1
         
