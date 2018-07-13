@@ -186,7 +186,7 @@ public class UnoServer {
 					
 					if((on-1) != 0){
 						line = line.replace((on +"/"+cap).toString(), ((on-1) +"/"+cap).toString());
-						line.replace("Mujtaba, ", "").replace(", Mujtaba", "");
+						line.replace(clientName +", ", "").replace(", " + clientName, "");
 					}else{
 						line = "";
 					}
