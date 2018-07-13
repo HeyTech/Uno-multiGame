@@ -20,7 +20,12 @@ class Application(tk.Frame):
         self.pack()
         self.login_page()
 
+    def clean_frame(self):
+        for widget in self.winfo_children():
+            widget.destroy()
+
     def login_page(self):
+        self.clean_frame()
         self.label_welcome_uno = tk.Label(self, text='Welcome to UNO Game',
                                           font=("Arial Bold", 35), foreground='black', justify='center')
         self.label_welcome_uno.pack()
@@ -61,9 +66,10 @@ class Application(tk.Frame):
     def playing_page(self):
         self.clean_frame()
 
-    def clean_frame(self):
-        for widget in self.winfo_children():
-            widget.destroy()
+    def exit(self):
+        from_server = self.client.send_server_request("<Exit/>")
+        print(from_server)
+        self.login_page()
 
     def display_cards_for_player(self, list_of_images, name):
         if name[1:-1] == self.player_name:
@@ -123,6 +129,8 @@ class Application(tk.Frame):
                         resize_image = img.subsample(5, 5)
                         images_list.append(resize_image)
                 self.display_cards_for_player(images_list, name_cards[i][0])
+        self.exit_button = tk.Button(self, text="Exit", command=self.exit)
+        self.exit_button.pack(side='bottom')
 
     def get_name(self):
         name_of_the_room = self.room_name.get()
@@ -135,12 +143,14 @@ class Application(tk.Frame):
               " Player=" + str('\'') + str(self.player_name) + str('\'/>'))
         command_to_server = str("<CreateRoom Name=") + str('\'') + str(name_of_the_room) + str('\'') + str(" Mode=") + str('\'') + str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(capacity) + str('\'') + str(" Player=") + str('\'') + str(self.player_name) + str('\'/>')
         room_message = (self.client.send_server_request(command_to_server)).decode()
+        print(room_message)
         if "Failed" in room_message:
             self.label_room = tk.Label(self, text="Room name is already taken. Try with a different room name")
             self.label_room.pack()
             # room = self.room_name.get()
         else:
             self.go_to_wait_frame(room_message)
+
     def selection_made(self):
         self.selected_option = self.var.get()
 
@@ -169,10 +179,13 @@ class Application(tk.Frame):
         self.btn_create.pack(side="left")
         self.btn_cancel = tk.Button(self.btn_frame, text="Cancel", command=self.game_mode)
         self.btn_cancel.pack(side="left")
+        self.exit_button = tk.Button(self, text="Exit", command=self.exit)
+        self.exit_button.pack(side='bottom')
 
     def update_list(self):
         update_command = "<UpdateLists/>"
         message_from_server = self.client.send_server_request(update_command)
+        print(message_from_server)
         players_rooms = json.loads(message_from_server.decode())
         self.players_list = players_rooms['Online players']
         self.game_mode_list = players_rooms["Rooms Created"]
@@ -190,27 +203,31 @@ class Application(tk.Frame):
 
     def go_to_wait_frame(self, join_room):
         self.clean_frame()
-        decoded_server = json.loads(join_room)["RoomInfo"]
+        decoded_server = join_room["RoomInfo"]
         mode = decoded_server["Mode"]
         players = decoded_server["Players"]
         teams = decoded_server["Teams"]
-
         def getting_ready():
             ready_message = "<GettingReady '" + decoded_server["RoomName"] + '\' \'' + self.player_name + '\'/>'
-            self.ready_message = (self.client.send_server_request(ready_message)).decode()
+            self.ready_message = json.loads((self.client.send_server_request(ready_message)).decode())
+            print(self.ready_message)
             self.go_to_wait_frame(self.ready_message)
         self.ready_button = tk.Button(self, text="Ready", command=getting_ready)
         self.ready_button.pack(side="bottom")
 
         def button_team_click(name):
             command_to_server_teamselection = "<ChooseTeam '" + decoded_server["RoomName"] + '\' \'' + self.player_name + '\' \'' + name + '\'/>'
-            self.team_join_message = (self.client.send_server_request(command_to_server_teamselection)).decode()
+            self.team_join_message = json.loads((self.client.send_server_request(command_to_server_teamselection)).decode())
+            print(self.team_join_message)
             self.go_to_wait_frame(self.team_join_message)
         if mode == "Single":
             self.listbox_single = tk.Listbox(self)
             for player in players:
                 self.listbox_single.insert(tk.END, player)
             self.listbox_single.pack(side="bottom")
+            self.exit_button = tk.Button(self, text="Exit", command=self.exit)
+            self.exit_button.pack(side='bottom')
+
         else:
             i = 0
             side_waitframe = ["right", "left"]
@@ -226,8 +243,9 @@ class Application(tk.Frame):
                 for member in team_members:
                    self.team_members_listbox.insert(tk.END, member)
                 self.team_members_listbox.pack(side="bottom")
-                i +=1
-        
+                i += 1
+            self.exit_button = tk.Button(self, text="Exit", command=self.exit)
+            self.exit_button.pack(side='bottom')
 
     def game_mode(self):
         self.clean_frame()
@@ -253,7 +271,6 @@ class Application(tk.Frame):
         self.game_label.pack(side="bottom")
         self.player_label.pack(side="bottom")
 
-
         def get_game_mode(*x):
             try:
                 r = self.game_list.curselection()[0]
@@ -265,14 +282,19 @@ class Application(tk.Frame):
                 else:
                     to_join_room = game_list_selected.split(' Single ')[0]
                 new_command = "<JoinRoom '" + str(to_join_room) + "' '" + str(self.player_name) + "'/>"
-                self.join_room = (self.client.send_server_request(new_command)).decode()
-                # print(self.join_room)
+                self.join_room = json.loads((self.client.send_server_request(new_command)).decode())
+                print(self.join_room)
                 if 'Failed' in self.join_room:
                     self.join_label = tk.Label(self, text=self.join_room)
                     self.join_label.pack()
                 else:
-                    # print('else')
-                    self.go_to_wait_frame(self.join_room)
+                    roominfo = (self.join_room["RoomInfo"])
+                    game_status = roominfo["GameStarted"]
+                    print(game_status)
+                    if game_status == 'true':
+                        self.game_play()
+                    else:
+                        self.go_to_wait_frame(self.join_room)
             except:
                 pass
         self.game_list.bind("<<ListboxSelect>>", get_game_mode)
@@ -286,6 +308,8 @@ class Application(tk.Frame):
             except:
                 pass
         self.player_list.bind("<<ListboxSelect>>", get_player)
+        self.exit_button = tk.Button(self, text="Exit", command=self.exit)
+        self.exit_button.pack(side='bottom')
 
     def login_command(self):
         try:
