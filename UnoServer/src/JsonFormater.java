@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -210,7 +211,62 @@ public class JsonFormater {
 		return obj;
 	}
 
+	public void RemovePlayerFromRoom(String clientName, String roomName) throws IOException {
+		String roomFile = roomName + ".txt";
+		
+		JSONObject obj = FetchGameInfo(roomName);
+		JSONObject RoomInfo = (JSONObject) obj.get("RoomInfo");
+		String Online = (String) RoomInfo.get("Online");
+		int on = Integer.parseInt(Online.split("/")[0]);
+		
+		if((on - 1) != 0){
+			int cap = Integer.parseInt(Online.split("/")[1]);
+			RoomInfo.put("Online", String.format("%d/%d", (on-1), cap));
+		
+			JSONObject boardInfo = (JSONObject) obj.get("BoardInfo");
+			JSONObject PlayersInfo = (JSONObject) boardInfo.get("PlayersInfo");
+			PlayersInfo.remove(clientName);
+			
+			JSONArray ReadyPlayers = (JSONArray) RoomInfo.get("ReadyPlayers");
+			ReadyPlayers.remove(clientName);
+			
+			JSONObject Teams = (JSONObject) RoomInfo.get("Teams");
+			JSONArray TeamA = (JSONArray) Teams.get("TeamA");
+			TeamA.remove(clientName);
+			JSONArray TeamB = (JSONArray) Teams.get("TeamB");
+			TeamB.remove(clientName);
+			
+			JSONArray Players = (JSONArray) RoomInfo.get("Players");
+			Players.remove(clientName);
+			
+			String Admin = (String) RoomInfo.get("Admin");
+			if(Admin.equals(clientName)){
+				RoomInfo.put("Admin", Players.get(0));
+			}
+			
+			System.out.println(obj);
+			updateGameFile(obj, roomFile); 
+		}else{
+			RemoveGameFile(roomFile, "Because it got empty");
+    		
+		}
+		
+	}
 
+	private void RemoveGameFile(String roomFile, String reason) {
+		File file = new File(roomFile);
+		if(file.delete()){
+			System.out.println("'" + file.getName() + "' Deleted: " + reason);
+		}else{
+			System.out.println("Delete '" + roomFile +"' operation is failed.");
+		}
+	}
+	
+	
+	
+
+
+	
 
 
 }
