@@ -145,10 +145,11 @@ public class UnoServer {
 					out.print("Have Fun playing");
 					out.flush();
 				}else if(s.startsWith("<LeaveRoom ")) {
-					LeaveRoom(clientName, s, out);
-					
+					String roomName = s.split("'")[1];
+					System.out.println(clientName + " wants to leave room: '" + roomName + "'");
+					LeaveRoom(clientName, s, out);	
 				}else if(s.startsWith("<Exit/>")) {
-					System.out.println(clientName + " wants to leave the game.");
+					System.out.println(clientName + " wants to Exit the game.");
 					ExitGame(clientName, s, out, client_ins, client_inps, client_outs, theConnections, i);
 				}
 				/*
@@ -168,6 +169,7 @@ public class UnoServer {
 
 		// s = "<LeaveRoom 'roomName'/>"  -->  "<Left Room Successfully />"
 		private static void LeaveRoom(String clientName, String s, PrintWriter out) throws IOException {
+			
 			String roomName = s.split("'")[1];
 			System.out.println(clientName + "  " +roomName);
 			JsonFormater cls = new JsonFormater();			
