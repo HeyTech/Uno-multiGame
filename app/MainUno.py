@@ -1,4 +1,6 @@
 import re
+
+import sys
 from PIL import ImageTk, Image
 import client
 import tkinter as tk
@@ -68,8 +70,8 @@ class Application(tk.Frame):
 
     def exit(self):
         from_server = self.client.send_server_request("<Exit/>")
-        print(from_server)
-        self.login_page()
+        if "Successfully" in from_server:
+            sys.exit()
 
     def display_cards_for_player(self, list_of_images, name):
         if name[1:-1] == self.player_name:
@@ -142,7 +144,7 @@ class Application(tk.Frame):
               str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(capacity) + str('\'') +
               " Player=" + str('\'') + str(self.player_name) + str('\'/>'))
         command_to_server = str("<CreateRoom Name=") + str('\'') + str(name_of_the_room) + str('\'') + str(" Mode=") + str('\'') + str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(capacity) + str('\'') + str(" Player=") + str('\'') + str(self.player_name) + str('\'/>')
-        room_message = (self.client.send_server_request(command_to_server)).decode()
+        room_message = json.loads((self.client.send_server_request(command_to_server)).decode())
         print(room_message)
         if "Failed" in room_message:
             self.label_room = tk.Label(self, text="Room name is already taken. Try with a different room name")
@@ -150,6 +152,14 @@ class Application(tk.Frame):
             # room = self.room_name.get()
         else:
             self.go_to_wait_frame(room_message)
+
+    def go_back_to_game_mode(self, roomname, join_room):
+        to_server = "<LeaveRoom " + "\'" + str(roomname) + "\'"
+        message_from_server = self.client.send_server_request(to_server)
+        if "Successfully" in message_from_server:
+            self.game_mode()
+        else:
+            self.go_to_wait_frame(join_room)
 
     def selection_made(self):
         self.selected_option = self.var.get()
@@ -207,6 +217,8 @@ class Application(tk.Frame):
         mode = decoded_server["Mode"]
         players = decoded_server["Players"]
         teams = decoded_server["Teams"]
+        admin = decoded_server["Admin"]
+
         def getting_ready():
             ready_message = "<GettingReady '" + decoded_server["RoomName"] + '\' \'' + self.player_name + '\'/>'
             self.ready_message = json.loads((self.client.send_server_request(ready_message)).decode())
@@ -246,6 +258,11 @@ class Application(tk.Frame):
                 i += 1
             self.exit_button = tk.Button(self, text="Exit", command=self.exit)
             self.exit_button.pack(side='bottom')
+        if admin==self.player_name:
+            start_game = tk.Button(self, text="Start Game")
+            start_game.pack(side='bottom')
+        back_to_join_room_page = tk.Button(self, text="Back", command=self.go_back_to_game_mode(decoded_server["RoomName"], join_room))
+        back_to_join_room_page.pack(side='bottom')
 
     def game_mode(self):
         self.clean_frame()
