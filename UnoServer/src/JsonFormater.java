@@ -3,7 +3,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -59,9 +62,19 @@ public class JsonFormater {
 		boardInfo.put("PlayersInfo", playersInfo);
 
 
+		JSONObject cardsInfo = new JSONObject();
+		List<String> cardArr = new ArrayList<>(Arrays.asList("b4", "y3", "yr", "r2", "cc", "y5", "g7", "bs", "g8", "g3", "br", "gs", "wc", "g2", "b8", "r3", "yp", "b6", "rr", "rp", "ys", "rs", "y2", "yp", "g4", "ys", "g3", "rs", "br", "b0", "y4", "r5", "rr", "b5", "gr", "bp", "yr", "b1", "g6", "y1", "yr", "y3", "gs", "r1", "gs", "r0", "y4", "r4", "wc", "r8", "br", "bs", "g1", "r1", "r8", "rp", "g5", "b8", "rp", "y6", "bs", "y7", "b7", "b2", "r5", "b3", "y7", "gr", "r7", "g6", "cc", "r6", "r2", "y5", "yp", "wc", "rp", "cc", "bp", "gs", "b4", "gp", "gr", "y1", "bp", "g1", "g8", "b5", "gp", "b6", "r6", "b7", "ys", "g0", "g4", "yp", "rs", "b1", "b2", "r4", "rs", "r3", "rr", "wc", "bp", "bs", "cc", "y8", "br", "gr", "y0", "yr", "r7", "y6", "gp", "gp", "g7", "rr", "b3", "g5", "ys", "y8", "g2", "y2"));       // Java 1.7+
+		//List<String> cardArr = new ArrayList<>(Arrays.asList("b4", "y3", "yr", "r2", "cc", "y5", "g7"));
+		Collections.shuffle(cardArr);
+		cardsInfo.put("AvailableCards", cardArr);
+		cardsInfo.put("DiscardedCards", new JSONArray());
+		
+		
 		obj.put("RoomInfo", roomInfo);
 		obj.put("BoardInfo", boardInfo);
-		obj.put("AvailableCards", new JSONArray());
+		obj.put("CardsInfo", cardsInfo);
+		
+
 		return obj;
 	}
 
@@ -190,7 +203,7 @@ public class JsonFormater {
 		return obj;
 	}
 
-	private void updateGameFile(JSONObject obj, String roomFile) throws IOException {
+	public void updateGameFile(JSONObject obj, String roomFile) throws IOException {
 		try (FileWriter gameFile = new FileWriter(roomFile)) {
 			gameFile.write(obj.toString());
 			// System.out.println("Successfully Copied JSON Object to File...");
@@ -261,12 +274,25 @@ public class JsonFormater {
 			System.out.println("Delete '" + roomFile +"' operation is failed.");
 		}
 	}
-	
-	
-	
 
-
-	
-
-
+	public JSONObject UpdateCardsInfo(JSONObject cardsInfo, int i) {
+		List<String> avilableCards = (List<String>) cardsInfo.get("AvailableCards");
+		if(avilableCards.size() < i){ // if avilableCards has less than 2 cards, shuffle discardedcards and give player 2 cards
+			List<String> DiscardedCards = (List<String>) cardsInfo.get("DiscardedCards");
+			Collections.shuffle(DiscardedCards);
+			avilableCards.addAll(DiscardedCards);			
+		}
+		JSONObject tempCardsInfo = new JSONObject();
+		List<String> giveCards = avilableCards.subList(0, i);
+		System.out.println(giveCards);
+		System.out.println(avilableCards);		
+		avilableCards = avilableCards.subList(i, avilableCards.size());
+		System.out.println(avilableCards);
+		tempCardsInfo.put("giveCards", giveCards);
+		tempCardsInfo.put("AvailableCards", avilableCards);
+		tempCardsInfo.put("DiscardedCards", new JSONArray());
+		
+		return tempCardsInfo;
+		
+	}
 }
