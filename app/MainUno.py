@@ -71,84 +71,121 @@ class Application(tk.Frame):
         if "Successfully" in from_server:
             sys.exit()
 
-    def display_cards_for_player(self, list_of_images, name):
-        if name[1:-1] == self.player_name:
-            for img in list_of_images:
-                self.label = tk.Button(self.frame_for_player_cards, image=img)
-                self.label.image = img
-                self.label.pack(side='bottom')
-        else:
-            for img in list_of_images:
-                self.label = tk.Label(self.frame_for_player_cards, image=img)
-                self.label.image = img
-                self.label.pack(side='bottom')
+    def putdowncard_to_server(self, card, room):
+        message_to_server_to_throw_cards = "<PlayingCard " + "\'" + room + "\' \'" + card + "\'/>"
+        print(message_to_server_to_throw_cards)
+        #put_down_card_to_server = self.client.send_server_request(message_to_server_to_throw_cards)
+        #print(put_down_card_to_server)
+
+    def uno_to_server(self, roomname, player):
+        uno_message = "<Uno " + "\'" + roomname + "\' " + "\'" + player + "\'/>"
+        print(uno_message)
+        #self.game_play()
+        #uno_return_from_server = self.client.send_server_request(uno_message)
+        #print(uno_return_from_server)
+
+    def new_card_to_server(self,roomname):
+        new_card_message = "<NewCard " + "\'" + roomname + "\'/>"
+        print(new_card_message)
+        #self.game_play()
+        #new_card_return_from_server = self.client.send_server_request(new_card_message)
+        #print(new_card_return_from_server)
 
     def game_play(self):
         self.clean_frame()
-        cards_string = "'ra64': ['y1', 'y2', 'r2', 'r8', 'b4'] - 'Mujtaba': ['y1', 'y2', 'r2', 'r8', 'b4'] - 'Ranju': [7] - 'Met': [1] - 'Nan': [5]"
-        splitted = cards_string.split(" - ")
-        ch = ['[', ']', ' ']
-        name_cards = [itera.split(":") for itera in splitted]
+        cards_string_json = {"RoomInfo":{"Mode":"2v2","Teams":{"TeamA":["Mujtaba","Mona"],"TeamB":["Ranju","Nandu"]},"Admin":"Mona",
+                                         "Online":"4/4","Name":"Naai 1123","Players":["Mona","Mujtaba","Ranju","Nandu"],
+                                         "ReadyPlayers":["Mujtaba","Ranju"],"GameStarted":True},
+                             "BoardInfo":{"OpenCard":"y5","CurrentTurn":"Ranju","Blocked":"Nandu","NextTurn":"Mona","TurnTime":"10",
+                                          "PlayersInfo":{"Mujtaba":{"Cards":[],"NumberOfCards":3,"Score":0,"Uno":False},"Mona":{"Cards":[],
+                                                                                                                                "NumberOfCards":6,"Score":0,"Uno":False},"Ranju":{"Cards":["r1","r3","r4","r8"],"NumberOfCards":2,"Score":0,"Uno":False},
+                                                         "Nandu":{"Cards":["g1","y3","y4","y8"],"NumberOfCards":11,"Score":0,"Uno":False}}},
+                             "avilableCards":["b1","b3","b4","b8","..."]}
+        room_info = cards_string_json["RoomInfo"]
+        board_info = cards_string_json["BoardInfo"]
+        players = board_info["PlayersInfo"]
+        room_name = room_info["Name"]
         folder_path = os.getcwd()
         collection = "Images"
         file_path = os.path.join(folder_path, collection)
         back_image = 'cb.png'
         back_image_path = os.path.join(file_path, back_image)
-        self.frame_for_other_player_cards = tk.LabelFrame(self, text="Other Players")
-        self.frame_for_other_player_cards.pack(side='right')
-        self.frame_for_player_cards = tk.LabelFrame(self, text="Your Cards")
-        self.frame_for_player_cards.pack(side='left')
-        for i in range(len(name_cards)):
-            for letter in name_cards[i][1]:
-                if letter in ch:
-                    name_cards[i][1] = name_cards[i][1].replace(letter, "")
-            if len(name_cards[i][1]) == 1 or len(name_cards[i][1]) == 2:
-                name_cards[i][1] = name_cards[i][1].replace("'", "")
-                self.message_label = tk.Label(self.frame_for_other_player_cards, text=name_cards[i][0])
-                self.message_label.pack(side='bottom')
+        side = ["left", "right", "top", "bottom"]
+        open_card = board_info["OpenCard"] + '.png'
+        open_card_path = os.path.join(file_path, open_card)
+
+        i = 0
+        for player in players:
+            cards = (players[player]["Cards"])
+            number_of_cards = (players[player]["NumberOfCards"])
+
+            if not cards:
+                player_name = player
+                player_frame = tk.LabelFrame(root)
+                player_frame.pack(side=side[i])
+                player_button = tk.Button(player_frame, text=player_name, command=lambda pl_name=player_name: self.uno_to_server(room_name, pl_name))
+                player_button.pack(side='top')
                 if os.path.exists(back_image_path):
                     back_img = tk.PhotoImage(file=back_image_path)
-                    resize_image_back = back_img.subsample(5, 5)
-                    self.image_label_for_other_players = tk.Label(self.frame_for_other_player_cards, image=resize_image_back)
-                    self.image_label_for_other_players.image = resize_image_back
-                    self.image_label_for_other_players.pack(side='bottom')
-                    self.no_of_cards = tk.Label(self.frame_for_other_player_cards, text=int(name_cards[i][1]))
-                    self.no_of_cards.pack(side='bottom')
+                    resize_image_back = back_img.subsample(2, 2)
+                    image_label_for_other_players = tk.Label(player_frame, image=resize_image_back)
+                    image_label_for_other_players.image = resize_image_back
+                    image_label_for_other_players.pack(side='bottom')
+                    no_of_cards = tk.Label(player_frame, text=int(number_of_cards))
+                    no_of_cards.pack(side='bottom')
             else:
-                mine = name_cards[i][1].split("', ")[0]
-                self.message_label = tk.Label(self.frame_for_player_cards, text=name_cards[i][0])
-                self.message_label.pack(side='left')
-                mine = mine.split(",")
-                mine = [item.replace("'", "") for item in mine]
+                player_name = player
+                team_cards = cards
+                player_frame = tk.LabelFrame(root)
+                player_frame.pack(side=side[i])
+                player_label = tk.Label(player_frame, text=player_name)
+                player_label.pack(side='top')
                 images_list = []
-                for card in mine:
+                for card in team_cards:
                     image_name = card + ".png"
                     image_path = os.path.join(file_path, image_name)
                     if os.path.exists(image_path):
                         img = tk.PhotoImage(file=image_path)
-                        resize_image = img.subsample(5, 5)
-                        images_list.append(resize_image)
-                self.display_cards_for_player(images_list, name_cards[i][0])
-        self.exit_button = tk.Button(self, text="Exit", command=self.exit)
-        self.exit_button.pack(side='bottom')
+                        resize_image = img.subsample(2, 2)
+                        if player_name == self.player_name:
+                            label = tk.Button(player_frame, image=resize_image, command= lambda card_name=card : self.putdowncard_to_server(card_name, room_name))
+                            label.image = resize_image
+                            label.pack(side='left', padx=10, pady=10)
+                        else:
+                            label = tk.Button(player_frame, image=resize_image, command= lambda card_name=card : self.putdowncard_to_server(card_name, room_name))
+                            label.image = resize_image
+                            label.pack(side='left', padx=10, pady=10)
+            i +=1
+        self.new_card_button = tk.Button(self, text="New Card", command=lambda: self.new_card_to_server(room_name))
+        self.uno_button = tk.Button(self, text="Uno", command=lambda: self.uno_to_server(room_name, self.player_name))
+        self.new_card_button.pack(side='left')
+        self.uno_button.pack(side='right')
+        if os.path.exists(open_card_path):
+            open_card_img = tk.PhotoImage(file=open_card_path).subsample(2, 2)
+            open_card_label = tk.Label(self, image=open_card_img)
+            open_card_label.image = open_card_img
+            open_card_label.pack(anchor=tk.CENTER)
+
 
     def get_name(self):
         name_of_the_room = self.room_name.get()
         if self.selected_option == "Single":
-            capacity = "1/10"
+            capacity = "1/8"
         else:
             capacity = "1/4"
         print("<CreateRoom Name=" + str('\'') + str(name_of_the_room) + str('\'') + " Mode=" + str('\'') +
               str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(capacity) + str('\'') +
               " Player=" + str('\'') + str(self.player_name) + str('\'/>'))
         command_to_server = str("<CreateRoom Name=") + str('\'') + str(name_of_the_room) + str('\'') + str(" Mode=") + str('\'') + str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(capacity) + str('\'') + str(" Player=") + str('\'') + str(self.player_name) + str('\'/>')
-        room_message = json.loads((self.client.send_server_request(command_to_server)).decode())
+        room_message = self.client.send_server_request(command_to_server).decode()
         print(room_message)
         if "Failed" in room_message:
             self.label_room = tk.Label(self, text="Room name is already taken. Try with a different room name")
             self.label_room.pack()
         else:
-            self.go_to_wait_frame(room_message)
+            room_message = json.loads(room_message)
+            #self.go_to_wait_frame(room_message)
+            self.game_play()
 
     def go_back_to_game_mode(self, roomname, join_room):
         to_server = "<LeaveRoom " + "\'" + str(roomname) + "\'"
@@ -215,6 +252,7 @@ class Application(tk.Frame):
         players = decoded_server["Players"]
         teams = decoded_server["Teams"]
         admin = decoded_server["Admin"]
+        ready_players = decoded_server["ReadyPlayers"]
 
         def getting_ready():
             ready_message = "<GettingReady '" + decoded_server["RoomName"] + '\' \'' + self.player_name + '\'/>'
@@ -233,6 +271,8 @@ class Application(tk.Frame):
             self.listbox_single = tk.Listbox(self)
             for player in players:
                 self.listbox_single.insert(tk.END, player)
+                if player in ready_players:
+                    self.listbox_single.itemconfig(tk.END, bg="green")
             self.listbox_single.pack(side="bottom")
             self.exit_button = tk.Button(self, text="Exit", command=self.exit)
             self.exit_button.pack(side='bottom')
@@ -250,6 +290,8 @@ class Application(tk.Frame):
                 self.team_members_listbox = tk.Listbox(self.team_label)
                 for member in team_members:
                    self.team_members_listbox.insert(tk.END, member)
+                   if member in ready_players:
+                        self.team_members_listbox.itemconfig(tk.END, bg="green")
                 self.team_members_listbox.pack(side="bottom")
                 i += 1
             self.exit_button = tk.Button(self, text="Exit", command=self.exit)
@@ -297,16 +339,17 @@ class Application(tk.Frame):
                 else:
                     to_join_room = game_list_selected.split(' Single ')[0]
                 new_command = "<JoinRoom '" + str(to_join_room) + "' '" + str(self.player_name) + "'/>"
-                self.join_room = json.loads((self.client.send_server_request(new_command)).decode())
+                self.join_room = self.client.send_server_request(new_command).decode()
                 print(self.join_room)
                 if 'Failed' in self.join_room:
                     self.join_label = tk.Label(self, text=self.join_room)
                     self.join_label.pack()
                 else:
+                    self.join_room = json.loads(self.join_room)
                     roominfo = (self.join_room["RoomInfo"])
                     game_status = roominfo["GameStarted"]
                     print(game_status)
-                    if game_status == 'true':
+                    if game_status:
                         self.game_play()
                     else:
                         self.go_to_wait_frame(self.join_room)
