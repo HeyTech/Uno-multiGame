@@ -1,5 +1,3 @@
-import re
-
 import sys
 from PIL import ImageTk, Image
 import client
@@ -69,7 +67,7 @@ class Application(tk.Frame):
         self.clean_frame()
 
     def exit(self):
-        from_server = self.client.send_server_request("<Exit/>")
+        from_server = (self.client.send_server_request("<Exit/>")).decode()
         if "Successfully" in from_server:
             sys.exit()
 
@@ -149,13 +147,12 @@ class Application(tk.Frame):
         if "Failed" in room_message:
             self.label_room = tk.Label(self, text="Room name is already taken. Try with a different room name")
             self.label_room.pack()
-            # room = self.room_name.get()
         else:
             self.go_to_wait_frame(room_message)
 
     def go_back_to_game_mode(self, roomname, join_room):
         to_server = "<LeaveRoom " + "\'" + str(roomname) + "\'"
-        message_from_server = self.client.send_server_request(to_server)
+        message_from_server = (self.client.send_server_request(to_server)).decode()
         if "Successfully" in message_from_server:
             self.game_mode()
         else:
@@ -243,7 +240,6 @@ class Application(tk.Frame):
         else:
             i = 0
             side_waitframe = ["right", "left"]
-            self.change_team = tk.Button(self, text="Change Team").pack(side="bottom")
             for team in teams:
                 self.team = team
                 team_members = teams[team]
@@ -258,10 +254,12 @@ class Application(tk.Frame):
                 i += 1
             self.exit_button = tk.Button(self, text="Exit", command=self.exit)
             self.exit_button.pack(side='bottom')
-        if admin==self.player_name:
+        if admin == self.player_name:
             start_game = tk.Button(self, text="Start Game")
             start_game.pack(side='bottom')
-        back_to_join_room_page = tk.Button(self, text="Back", command=self.go_back_to_game_mode(decoded_server["RoomName"], join_room))
+        decoded_roomname = decoded_server["RoomName"]
+        back_to_join_room_page = tk.Button(self, text="Leave Room")
+        back_to_join_room_page["command"] = lambda: self.go_back_to_game_mode(decoded_roomname, join_room)
         back_to_join_room_page.pack(side='bottom')
 
     def game_mode(self):
