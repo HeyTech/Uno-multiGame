@@ -234,7 +234,7 @@ public class UnoServer {
 			
 			JSONObject tempJson = new JSONObject();
 			tempJson.put("RoomInfo", obj.get("RoomInfo"));
-			tempJson.put("RoomInfo", obj.get("BoardInfo"));
+			tempJson.put("BoardInfo", obj.get("BoardInfo"));
 			out.print(tempJson);
 			out.flush();
 		}
