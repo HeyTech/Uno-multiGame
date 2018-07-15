@@ -212,11 +212,11 @@ public class JsonFormater {
 
 	}
 
-	public JSONObject FetchGameInfo(String roomName) {
+	public JSONObject FetchGameInfo(String roomFile) {
 		JSONParser parser = new JSONParser();
 		JSONObject obj = null;
 		try {
-			obj = (JSONObject) parser.parse(new FileReader(roomName+".txt"));
+			obj = (JSONObject) parser.parse(new FileReader(roomFile));
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 		}
@@ -227,7 +227,7 @@ public class JsonFormater {
 	public void RemovePlayerFromRoom(String clientName, String roomName) throws IOException {
 		String roomFile = roomName + ".txt";
 		
-		JSONObject obj = FetchGameInfo(roomName);
+		JSONObject obj = FetchGameInfo(roomFile);
 		JSONObject RoomInfo = (JSONObject) obj.get("RoomInfo");
 		String Online = (String) RoomInfo.get("Online");
 		int on = Integer.parseInt(Online.split("/")[0]);
@@ -283,11 +283,8 @@ public class JsonFormater {
 			avilableCards.addAll(DiscardedCards);			
 		}
 		JSONObject tempCardsInfo = new JSONObject();
-		List<String> giveCards = avilableCards.subList(0, i);
-		System.out.println(giveCards);
-		System.out.println(avilableCards);		
+		List<String> giveCards = avilableCards.subList(0, i);	
 		avilableCards = avilableCards.subList(i, avilableCards.size());
-		System.out.println(avilableCards);
 		tempCardsInfo.put("giveCards", giveCards);
 		tempCardsInfo.put("AvailableCards", avilableCards);
 		tempCardsInfo.put("DiscardedCards", new JSONArray());
@@ -295,4 +292,71 @@ public class JsonFormater {
 		return tempCardsInfo;
 		
 	}
+
+	public JSONObject NewGameDealCards(String roomFile) {
+		
+		JsonFormater cls = new JsonFormater();
+		JSONObject obj =  cls.FetchGameInfo(roomFile);
+		
+		JSONObject cardsInfo = (JSONObject) obj.get("CardsInfo");
+		JSONObject BoardInfo = (JSONObject) obj.get("BoardInfo");
+
+		List<String> avilableCards = (List<String>) cardsInfo.get("AvailableCards");
+		
+		Collections.shuffle(avilableCards);
+		String openCard = "";
+		boolean openCardNotAWildCard = false;
+		int k = 0;
+		
+		while(!openCardNotAWildCard){ // choose a opencard that is not a wild card
+			openCard = avilableCards.get(k);
+			if("cpsr".indexOf(openCard.charAt(1)) == -1){ // "cpsr" = wild cards
+				System.out.println("OpenCard: "+ openCard);
+				BoardInfo.put("OpenCard", openCard);
+
+				// found a not a wild card
+				openCardNotAWildCard = true;
+				avilableCards.remove(k);
+			}
+			k++;
+		}
+		
+		//hand 7 cards for every player, 1 card each 
+		JSONObject PlayersInfo = (JSONObject) BoardInfo.get("PlayersInfo");
+		JSONObject roomInfo = (JSONObject) obj.get("RoomInfo");
+		
+		String mode = (String) roomInfo.get("Mode");
+		if(mode.toLowerCase().equals("single")){
+			List<String> tempPlayers = (List<String>) roomInfo.get("Players");
+			Collections.shuffle(tempPlayers);
+			roomInfo.put("Players", tempPlayers);
+		}
+
+		JSONArray players = (JSONArray) roomInfo.get("Players");
+		for(int i = 0; i <7; i++){
+			for(int p = 0;  p < players.size(); p++){
+				String card = avilableCards.remove(0);
+				JSONObject player = (JSONObject) PlayersInfo.get(players.get(p));
+				JSONArray cards = (JSONArray) player.get("Cards");
+				cards.add(card);	
+			}
+		}
+		cardsInfo.put("AvailableCards", avilableCards);
+	
+		for(int p = 0;  p < players.size(); p++){
+			JSONObject player = (JSONObject) PlayersInfo.get(players.get(p));
+			player.put("NumberOfCards", 7);
+		}
+		
+		
+		// Set "GameStarted" to true
+		roomInfo.put("GameStarted", true);
+		
+		
+		// playing order 
+		BoardInfo.put("CurrentTurn", players.get(0));
+		BoardInfo.put("NextTurn", players.get(1));		
+		return obj;
+	}
+
 }

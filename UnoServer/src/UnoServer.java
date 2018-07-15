@@ -144,10 +144,8 @@ public class UnoServer {
 					GettingReady(s, out);
 					// InformPlayers()         //*******************************************************
 				}else if(s.startsWith("<StartGame")) {
-					out.print("have fun playing");
-					out.flush();
 					// <StartGame 'RoomName'/>
-					//StartGame(s, out);
+					StartGame(s, out);
 				}else if(s.startsWith("<Uno ")) {
 					// <Uno 'RoomName' 'PlayerName'/>
 					String playerName = s.split("'")[3];
@@ -185,8 +183,63 @@ public class UnoServer {
 		}
 	}
 
-	private static void StartGame(String s, PrintWriter out) {
-		// TODO Auto-generated method stub
+	private static void StartGame(String s, PrintWriter out) throws IOException {
+		String roomName = s.split("'")[1];
+		boolean ableToStartGame = false;
+		JsonFormater cls = new JsonFormater();
+		JSONObject obj =  cls.FetchGameInfo(roomName + ".txt");
+		JSONObject roomInfo = (JSONObject) obj.get("RoomInfo");
+		JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");
+		JSONArray players = (JSONArray) roomInfo.get("Players");
+		if(players.size() == readyPlayers.size()){
+			String mode = (String) roomInfo.get("Mode");
+			if(mode.toLowerCase().contains("v") & mode.length() == 3){ // to make teamGame dynamic (xVx)
+				JSONObject teams = (JSONObject) roomInfo.get("Teams");
+				JSONArray teamA = (JSONArray) teams.get("TeamA");
+				JSONArray teamB = (JSONArray) teams.get("TeamB");
+				if(teamA.size() == teamB.size() & players.size() >= 4){ // Teams must have same amount of players and at-least 4 players
+					ableToStartGame = true;
+				}else{
+					System.out.println("<StartGame Failed: Teams must have same amont and at-least 4 players/>");
+					out.print("<StartGame Failed: Teams must have same amont and at-least 4 players/>");
+					out.flush();
+				}
+			}else if(mode.toLowerCase().equals("single")){ // if sinle game
+				if(players.size() >= 2){ // Teams must have same amount of players and at-least 4 players
+					ableToStartGame = true;
+				}else{
+					System.out.println("<StartGame Failed: Atleast 2 players needed to start Single a Game/>");
+					out.print("<StartGame Failed: Atleast 2 players needed to start Single a Game/>");
+					out.flush();
+				}
+			}
+			
+		}else{
+			System.out.println("<StartGame Failed: All player must be ready/>");
+			out.print("<StartGame Failed: All player must be ready/>");
+			out.flush();
+		}
+
+		if(ableToStartGame){
+			String roomFile = roomName + ".txt";
+			JSONObject Newobj = cls.NewGameDealCards(roomFile);
+			cls.updateGameFile(Newobj, roomFile);
+
+			//change titles for all players
+			for(int p = 0;  p < players.size(); p++){
+				ChangeTitle(players.get(p).toString(), "idle");
+			}
+			
+			
+			
+			JSONObject tempJson = new JSONObject();
+			tempJson.put("RoomInfo", obj.get("RoomInfo"));
+			tempJson.put("RoomInfo", obj.get("BoardInfo"));
+			out.print(tempJson);
+			out.flush();
+		}
+		
+		
 		
 	}
 
@@ -194,8 +247,10 @@ public class UnoServer {
 		int giveCards = 1;
 		
 		String roomName = s.split("'")[1];
+		String roomFile = roomName + ".txt";
+		
 		JsonFormater cls = new JsonFormater();
-		JSONObject obj =  cls.FetchGameInfo(roomName);
+		JSONObject obj =  cls.FetchGameInfo(roomFile);
 		JSONObject BoardInfo = (JSONObject) obj.get("BoardInfo");
 		JSONObject PlayersInfo = (JSONObject) BoardInfo.get("PlayersInfo");
 		JSONObject player = (JSONObject) PlayersInfo.get(playerName);
@@ -231,9 +286,10 @@ public class UnoServer {
 
 		String roomName = s.split("'")[1];
 		String playerName = s.split("'")[3];
-
+		String roomFile = roomName + ".txt";
+		
 		JsonFormater cls = new JsonFormater();
-		JSONObject obj =  cls.FetchGameInfo(roomName);
+		JSONObject obj =  cls.FetchGameInfo(roomFile);
 		JSONObject BoardInfo = (JSONObject) obj.get("BoardInfo");
 		JSONObject PlayersInfo = (JSONObject) BoardInfo.get("PlayersInfo");
 		JSONObject player = (JSONObject) PlayersInfo.get(playerName);
@@ -310,15 +366,15 @@ public class UnoServer {
 		out.flush();
 	}
 
-	private static void GettingReady(String s, PrintWriter out) {
+	private static void GettingReady(String s, PrintWriter out) throws IOException {
 		//String s = "<ChooseTeam 'RoomName' 'UserName' 'teamA'/>";
 		String[] a = s.replace("' '", "'").split("'");
 		String roomFile = a[1]+".txt";
 		String playerName = a[2];
 
 		JsonFormater cls = new JsonFormater();					
-		JSONObject obj = cls.PlayerGettingReady(roomFile, playerName);
-
+		JSONObject obj = cls.PlayerGettingReady(roomFile, playerName); // updates the roomFile too
+		
 		JSONObject tempJson = new JSONObject();
 		tempJson.put("RoomInfo", obj.get("RoomInfo"));
 		out.print(tempJson);
@@ -362,26 +418,24 @@ public class UnoServer {
 					rdy = Integer.parseInt(b[5].split("/")[0]);
 					cap = Integer.parseInt(b[5].split("/")[1]);
 
-					if(line.contains(playerName)){
+					if(line.contains(playerName)){ // if player is already in a game (rejoins)
 						changePlayerTitle = true;
-						JSONObject newObj = cls.FetchGameInfo(roomName);
+						JSONObject newObj = cls.FetchGameInfo(roomName + ".txt");						
+						
 						JSONObject tempJson = new JSONObject();
 						tempJson.put("RoomInfo", newObj.get("RoomInfo"));
 						out.print(tempJson);
 						out.flush();
 						System.out.println("Successfully join room: "+ newObj);
 					}
-					else if(rdy < cap){
+					else if(rdy < cap){ // if player want to join a new Game Room
 						changePlayerTitle = true;
 						line = line.replace((rdy +"/"+cap).toString(), ((rdy+1) +"/"+cap).toString());
 						line = line.replaceAll("'/>", ", " + playerName + "'/>");
 
-						// Save to file ****************************************
 						String roomFile = roomName +".txt";
 
 						JSONObject newObj = cls.AddNewPlayerToRoom(roomFile, playerName, ((rdy+1) +"/"+cap).toString());
-						System.out.println(newObj);
-
 						try (FileWriter gameFile = new FileWriter(roomName+".txt")) {
 							gameFile.write(newObj.toString());
 							System.out.println("Successfully join room: "+ newObj);
