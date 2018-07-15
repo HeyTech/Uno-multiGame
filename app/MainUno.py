@@ -81,90 +81,94 @@ class Application(tk.Frame):
         uno_message = "<Uno " + "\'" + roomname + "\' " + "\'" + player + "\'/>"
         print(uno_message)
         #self.game_play()
-        #uno_return_from_server = self.client.send_server_request(uno_message)
-        #print(uno_return_from_server)
+        uno_return_from_server = json.loads(self.client.send_server_request(uno_message).decode())
+        print(uno_return_from_server)
 
     def new_card_to_server(self,roomname):
         new_card_message = "<NewCard " + "\'" + roomname + "\'/>"
         print(new_card_message)
         #self.game_play()
-        #new_card_return_from_server = self.client.send_server_request(new_card_message)
-        #print(new_card_return_from_server)
+        new_card_return_from_server = json.loads(self.client.send_server_request(new_card_message).decode())
+        print(new_card_return_from_server)
 
-    def game_play(self):
-        self.clean_frame()
-        cards_string_json = {"RoomInfo":{"Mode":"2v2","Teams":{"TeamA":["Mujtaba","Mona"],"TeamB":["Ranju","Nandu"]},"Admin":"Mona",
-                                         "Online":"4/4","Name":"Naai 1123","Players":["Mona","Mujtaba","Ranju","Nandu"],
-                                         "ReadyPlayers":["Mujtaba","Ranju"],"GameStarted":True},
-                             "BoardInfo":{"OpenCard":"y5","CurrentTurn":"Ranju","Blocked":"Nandu","NextTurn":"Mona","TurnTime":"10",
-                                          "PlayersInfo":{"Mujtaba":{"Cards":[],"NumberOfCards":3,"Score":0,"Uno":False},"Mona":{"Cards":[],
-                                                                                                                                "NumberOfCards":6,"Score":0,"Uno":False},"Ranju":{"Cards":["r1","r3","r4","r8"],"NumberOfCards":2,"Score":0,"Uno":False},
-                                                         "Nandu":{"Cards":["g1","y3","y4","y8"],"NumberOfCards":11,"Score":0,"Uno":False}}},
-                             "avilableCards":["b1","b3","b4","b8","..."]}
-        room_info = cards_string_json["RoomInfo"]
-        board_info = cards_string_json["BoardInfo"]
-        players = board_info["PlayersInfo"]
-        room_name = room_info["Name"]
-        folder_path = os.getcwd()
-        collection = "Images"
-        file_path = os.path.join(folder_path, collection)
-        back_image = 'cb.png'
-        back_image_path = os.path.join(file_path, back_image)
-        side = ["left", "right", "top", "bottom"]
-        open_card = board_info["OpenCard"] + '.png'
-        open_card_path = os.path.join(file_path, open_card)
+    def game_play(self, game_start):
+        #while(1):
+            #game_start = input('mujtaba is the stupid: ')
 
-        i = 0
-        for player in players:
-            cards = (players[player]["Cards"])
-            number_of_cards = (players[player]["NumberOfCards"])
+            self.clean_frame()
+            cards_string_json = game_start
+            # cards_string_json = {"RoomInfo":{"Mode":"2v2","Teams":{"TeamA":["Mujtaba","Mona"],"TeamB":["Ranju","Nandu"]},"Admin":"Mona",
+            #                                  "Online":"4/4","Name":"Naai 1123","Players":["Mona","Mujtaba","Ranju","Nandu"],
+            #                                  "ReadyPlayers":["Mujtaba","Ranju"],"GameStarted":True},
+            #                      "BoardInfo":{"OpenCard":"y5","CurrentTurn":"Ranju","Blocked":"Nandu","NextTurn":"Mona","TurnTime":"10",
+            #                                   "PlayersInfo":{"Mujtaba":{"Cards":[],"NumberOfCards":3,"Score":0,"Uno":False},"Mona":{"Cards":[],
+            #                                                                                                                         "NumberOfCards":6,"Score":0,"Uno":False},"Ranju":{"Cards":["r1","r3","r4","r8"],"NumberOfCards":2,"Score":0,"Uno":False},
+            #                                                  "Nandu":{"Cards":["g1","y3","y4","y8"],"NumberOfCards":11,"Score":0,"Uno":False}}},
+            #                      "avilableCards":["b1","b3","b4","b8","..."]}
+            room_info = cards_string_json["RoomInfo"]
+            board_info = cards_string_json["BoardInfo"]
+            players = board_info["PlayersInfo"]
+            room_name = room_info["Name"]
+            folder_path = os.getcwd()
+            collection = "Images"
+            file_path = os.path.join(folder_path, collection)
+            back_image = 'cb.png'
+            back_image_path = os.path.join(file_path, back_image)
+            side = ["left", "right", "top", "bottom"]
+            open_card = board_info["OpenCard"] + '.png'
+            open_card_path = os.path.join(file_path, open_card)
 
-            if not cards:
-                player_name = player
-                player_frame = tk.LabelFrame(root)
-                player_frame.pack(side=side[i])
-                player_button = tk.Button(player_frame, text=player_name, command=lambda pl_name=player_name: self.uno_to_server(room_name, pl_name))
-                player_button.pack(side='top')
-                if os.path.exists(back_image_path):
-                    back_img = tk.PhotoImage(file=back_image_path)
-                    resize_image_back = back_img.subsample(2, 2)
-                    image_label_for_other_players = tk.Label(player_frame, image=resize_image_back)
-                    image_label_for_other_players.image = resize_image_back
-                    image_label_for_other_players.pack(side='bottom')
-                    no_of_cards = tk.Label(player_frame, text=int(number_of_cards))
-                    no_of_cards.pack(side='bottom')
-            else:
-                player_name = player
-                team_cards = cards
-                player_frame = tk.LabelFrame(root)
-                player_frame.pack(side=side[i])
-                player_label = tk.Label(player_frame, text=player_name)
-                player_label.pack(side='top')
-                images_list = []
-                for card in team_cards:
-                    image_name = card + ".png"
-                    image_path = os.path.join(file_path, image_name)
-                    if os.path.exists(image_path):
-                        img = tk.PhotoImage(file=image_path)
-                        resize_image = img.subsample(2, 2)
-                        if player_name == self.player_name:
-                            label = tk.Button(player_frame, image=resize_image, command= lambda card_name=card : self.putdowncard_to_server(card_name, room_name))
-                            label.image = resize_image
-                            label.pack(side='left', padx=10, pady=10)
-                        else:
-                            label = tk.Button(player_frame, image=resize_image, command= lambda card_name=card : self.putdowncard_to_server(card_name, room_name))
-                            label.image = resize_image
-                            label.pack(side='left', padx=10, pady=10)
-            i +=1
-        self.new_card_button = tk.Button(self, text="New Card", command=lambda: self.new_card_to_server(room_name))
-        self.uno_button = tk.Button(self, text="Uno", command=lambda: self.uno_to_server(room_name, self.player_name))
-        self.new_card_button.pack(side='left')
-        self.uno_button.pack(side='right')
-        if os.path.exists(open_card_path):
-            open_card_img = tk.PhotoImage(file=open_card_path).subsample(2, 2)
-            open_card_label = tk.Label(self, image=open_card_img)
-            open_card_label.image = open_card_img
-            open_card_label.pack(anchor=tk.CENTER)
+            i = 0
+            for player in players:
+                cards = (players[player]["Cards"])
+                number_of_cards = (players[player]["NumberOfCards"])
+
+                if not cards:
+                    player_name = player
+                    player_frame = tk.LabelFrame(root)
+                    player_frame.pack(side=side[i])
+                    player_button = tk.Button(player_frame, text=player_name, command=lambda pl_name=player_name: self.uno_to_server(room_name, pl_name))
+                    player_button.pack(side='top')
+                    if os.path.exists(back_image_path):
+                        back_img = tk.PhotoImage(file=back_image_path)
+                        resize_image_back = back_img.subsample(2, 2)
+                        image_label_for_other_players = tk.Label(player_frame, image=resize_image_back)
+                        image_label_for_other_players.image = resize_image_back
+                        image_label_for_other_players.pack(side='bottom')
+                        no_of_cards = tk.Label(player_frame, text=int(number_of_cards))
+                        no_of_cards.pack(side='bottom')
+                else:
+                    player_name = player
+                    team_cards = cards
+                    player_frame = tk.LabelFrame(root)
+                    player_frame.pack(side=side[i])
+                    player_label = tk.Label(player_frame, text=player_name)
+                    player_label.pack(side='top')
+                    images_list = []
+                    for card in team_cards:
+                        image_name = card + ".png"
+                        image_path = os.path.join(file_path, image_name)
+                        if os.path.exists(image_path):
+                            img = tk.PhotoImage(file=image_path)
+                            resize_image = img.subsample(2, 2)
+                            if player_name == self.player_name:
+                                label = tk.Button(player_frame, image=resize_image, command= lambda card_name=card : self.putdowncard_to_server(card_name, room_name))
+                                label.image = resize_image
+                                label.pack(side='left', padx=10, pady=10)
+                            else:
+                                label = tk.Button(player_frame, image=resize_image, command= lambda card_name=card : self.putdowncard_to_server(card_name, room_name))
+                                label.image = resize_image
+                                label.pack(side='left', padx=10, pady=10)
+                i +=1
+            self.new_card_button = tk.Button(self, text="New Card", command=lambda: self.new_card_to_server(room_name))
+            self.uno_button = tk.Button(self, text="Uno", command=lambda: self.uno_to_server(room_name, self.player_name))
+            self.new_card_button.pack(side='left')
+            self.uno_button.pack(side='right')
+            if os.path.exists(open_card_path):
+                open_card_img = tk.PhotoImage(file=open_card_path).subsample(2, 2)
+                open_card_label = tk.Label(self, image=open_card_img)
+                open_card_label.image = open_card_img
+                open_card_label.pack(anchor=tk.CENTER)
 
 
     def get_name(self):
@@ -184,8 +188,8 @@ class Application(tk.Frame):
             self.label_room.pack()
         else:
             room_message = json.loads(room_message)
-            #self.go_to_wait_frame(room_message)
-            self.game_play()
+            self.go_to_wait_frame(room_message)
+            #self.game_play()
 
     def go_back_to_game_mode(self, roomname, join_room):
         to_server = "<LeaveRoom " + "\'" + str(roomname) + "\'"
@@ -253,9 +257,23 @@ class Application(tk.Frame):
         teams = decoded_server["Teams"]
         admin = decoded_server["Admin"]
         ready_players = decoded_server["ReadyPlayers"]
+        room_name = decoded_server["RoomName"]
+
+        def start_game_to_server(roomname):
+            start_game_message = "<StartGame '" + roomname + "\'/>"
+            self.start_game_response_decoded = self.client.send_server_request(start_game_message).decode()
+            print(self.start_game_response_decoded)
+            self.start_game_response = json.loads(self.start_game_response_decoded)
+            roominfo = (self.start_game_response["RoomInfo"])
+            game_status = roominfo["GameStarted"]
+            print(game_status)
+            if game_status:
+                self.game_play(self.start_game_response)
+            else:
+                self.go_to_wait_frame(self.start_game_response)
 
         def getting_ready():
-            ready_message = "<GettingReady '" + decoded_server["RoomName"] + '\' \'' + self.player_name + '\'/>'
+            ready_message = "<GettingReady '" + room_name + '\' \'' + self.player_name + '\'/>'
             self.ready_message = json.loads((self.client.send_server_request(ready_message)).decode())
             print(self.ready_message)
             self.go_to_wait_frame(self.ready_message)
@@ -263,7 +281,7 @@ class Application(tk.Frame):
         self.ready_button.pack(side="bottom")
 
         def button_team_click(name):
-            command_to_server_teamselection = "<ChooseTeam '" + decoded_server["RoomName"] + '\' \'' + self.player_name + '\' \'' + name + '\'/>'
+            command_to_server_teamselection = "<ChooseTeam '" + room_name + '\' \'' + self.player_name + '\' \'' + name + '\'/>'
             self.team_join_message = json.loads((self.client.send_server_request(command_to_server_teamselection)).decode())
             print(self.team_join_message)
             self.go_to_wait_frame(self.team_join_message)
@@ -297,11 +315,10 @@ class Application(tk.Frame):
             self.exit_button = tk.Button(self, text="Exit", command=self.exit)
             self.exit_button.pack(side='bottom')
         if admin == self.player_name:
-            start_game = tk.Button(self, text="Start Game")
+            start_game = tk.Button(self, text="Start Game", command=lambda rm=room_name: start_game_to_server(rm))
             start_game.pack(side='bottom')
-        decoded_roomname = decoded_server["RoomName"]
         back_to_join_room_page = tk.Button(self, text="Leave Room")
-        back_to_join_room_page["command"] = lambda: self.go_back_to_game_mode(decoded_roomname, join_room)
+        back_to_join_room_page["command"] = lambda: self.go_back_to_game_mode(room_name, join_room)
         back_to_join_room_page.pack(side='bottom')
 
     def game_mode(self):
@@ -350,7 +367,7 @@ class Application(tk.Frame):
                     game_status = roominfo["GameStarted"]
                     print(game_status)
                     if game_status:
-                        self.game_play()
+                        self.game_play(self.join_room)
                     else:
                         self.go_to_wait_frame(self.join_room)
             except:
