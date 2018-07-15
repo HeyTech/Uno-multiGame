@@ -146,10 +146,10 @@ public class UnoServer {
 				}else if(s.startsWith("<StartGame")) {
 					// <StartGame 'RoomName'/>
 					StartGame(s, out);
+					//TODO: InformPlayers()     //*******************************************************
 				}else if(s.startsWith("<Uno ")) {
 					// <Uno 'RoomName' 'PlayerName'/>
 					String playerName = s.split("'")[3];
-					System.out.println("'"+clientName + "' pressed on uno button on " + playerName);
 					int giveCards = 2;
 					UnoPlay(s, clientName, giveCards, out);
 					// InformPlayers()         //*******************************************************
@@ -157,6 +157,11 @@ public class UnoServer {
 					// <NewCard 'RoomName'/>
 					System.out.println("'"+clientName + "' draw a new card.");
 					NewCard(s, clientName, out);
+					// InformPlayers()         //*******************************************************
+				}else if(s.startsWith("<PlayCard ")) {
+					// <PlayCard 'roomName' 'cardName'/>
+					PlayCard(s, clientName, out);
+					
 					// InformPlayers()         //*******************************************************
 				}else if(s.startsWith("<LeaveRoom ")) {
 					// "<LeaveRoom 'roomName'/>"
@@ -167,6 +172,18 @@ public class UnoServer {
 				}else if(s.startsWith("<Exit/>")) {
 					System.out.println(clientName + " wants to Exit the game.");
 					ExitGame(clientName, s, out, client_ins, client_inps, client_outs, theConnections, i);
+				}else if(s.startsWith("<FetchGameRoom ")) {
+					// "<FetchGameRoom 'roomName'/>"
+					String roomFile = s.split("'")[1];
+					
+					JsonFormater cls = new JsonFormater();
+					JSONObject obj =  cls.FetchGameInfo(roomFile);
+					
+					JSONObject tempJson = new JSONObject();
+					tempJson.put("RoomInfo", obj.get("RoomInfo"));
+					tempJson.put("BoardInfo", obj.get("BoardInfo"));
+					out.print(tempJson);
+					out.flush();
 				}
 				/*
 				try{
@@ -181,6 +198,143 @@ public class UnoServer {
 			}
 
 		}
+	}
+
+	private static void PlayCard(String s, String clientName, PrintWriter out) throws IOException {
+		String roomFile = s.split("'")[1];
+		String playCard = s.split("'")[3];
+		
+		List<String> tempCardsToBlockedPlayer = null;
+		boolean playable = false;
+		boolean blockable = false;
+		boolean reversible = false;
+		int giveCards = 0;
+		
+		JsonFormater cls = new JsonFormater();
+		JSONObject obj =  cls.FetchGameInfo(roomFile);
+		JSONObject roomInfo = (JSONObject) obj.get("RoomInfo");
+		JSONObject boardInfo = (JSONObject) obj.get("BoardInfo");
+		JSONObject cardsInfo =(JSONObject) obj.get("CardsInfo");
+		String openCard = (String) boardInfo.get("OpenCard");
+		
+		if("wc".indexOf(playCard.charAt(0)) == 0){ // wild cards 4+
+			playable = blockable = true; giveCards = 4;
+			System.out.println("1 play, give 4+ to next, block next");
+
+		}else if("wc".indexOf(playCard.charAt(0)) == 1){ // wild card Change color
+			playable = true;
+			System.out.println("2 change color");
+
+		}else if(openCard.indexOf(playCard.charAt(0)) == 0){ // if open card and new playCard are the same color
+			playable = true;
+			if("prs".indexOf(playCard.charAt(1)) == 0){ // same color 2+
+				blockable = true;
+				giveCards = 2;
+				System.out.println("same color 2+");
+
+			}else if("prs".indexOf(playCard.charAt(1)) == 1){ // same color reverse
+				reversible = true;
+				System.out.println("same color reverse");
+
+			}else if("prs".indexOf(playCard.charAt(1)) == 2){ // same color stop(block)
+				System.out.println("same color block");
+				blockable = true;	
+			}
+
+		} else if(openCard.indexOf(playCard.charAt(1)) == 1){ // Same number card
+			System.out.println("4 Same number card");
+			playable = true;
+		}
+
+		if(playable){
+
+			JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");			
+			String currentTurn = (String) boardInfo.get("CurrentTurn");
+			int blocked = 0;
+
+			if(reversible){ // just reverse play
+				int reverse = (int) cardsInfo.get("Reverse");
+				cardsInfo.put("Reverse", reverse*(-1));
+				
+			}else if(blockable){
+				blocked = 1;
+				if(giveCards > 0){
+					JSONObject tempCardsInfo = cls.UpdateCardsInfo(cardsInfo, giveCards); // update the list if avilableCards is less then giveCards
+
+					List<String> AvailableCards = (List<String>) tempCardsInfo.get("AvailableCards");
+					List<String> DiscardedCards = (List<String>) tempCardsInfo.get("DiscardedCards");
+
+					cardsInfo.put("AvailableCards", AvailableCards);
+					cardsInfo.put("DiscardedCards", DiscardedCards);	
+
+					tempCardsToBlockedPlayer = (List<String>) tempCardsInfo.get("giveCards");
+				}
+			}
+
+			/* To assign next player to play */
+			int cIndex = readyPlayers.indexOf(currentTurn);
+			int reverse = (int) cardsInfo.get("Reverse");
+			int nextIndex = 0;
+			int giveCardsToPlayer = 0;
+			if(reverse == 1){
+				nextIndex = (cIndex + reverse + blocked)%readyPlayers.size();
+				giveCardsToPlayer = (cIndex + reverse)%readyPlayers.size();
+
+			}else{
+				nextIndex = (readyPlayers.size() + (cIndex + reverse - blocked))%readyPlayers.size();
+				giveCardsToPlayer = (readyPlayers.size() + (cIndex + reverse))%readyPlayers.size();
+
+			}
+			boardInfo.put("CurrentTurn", readyPlayers.get(nextIndex)); // new CUrrentTurn (for next round)
+
+			if(giveCards > 0){
+				String playerName = (String) readyPlayers.get(giveCardsToPlayer);
+				JSONObject playersInfo = (JSONObject) boardInfo.get("PlayersInfo");
+				JSONObject player = (JSONObject) playersInfo.get(playerName);
+				List<String> cards = (List<String>) player.get("Cards");
+				cards.addAll(tempCardsToBlockedPlayer);
+				player.put("Cards", cards);
+				player.put("NumberOfCards", cards.size());
+			}
+			
+			
+			// every time a playable card plays
+			JSONObject playerInfo = (JSONObject) boardInfo.get("PlayersInfo");
+			JSONObject player = (JSONObject) playerInfo.get(clientName);
+
+			// check if player won game
+			int NumberOfCards = (int) player.get("NumberOfCards");
+			if(NumberOfCards == 0){
+				int score = (int)player.get("Score");
+				player.put("Score", score +1);
+				System.out.println("GAME ENDED!!!!! " + clientName + "won with score:" + (score +1));
+				out.println("<playCard WON: MATCH OVER/>");
+				out.flush();
+
+			}else{
+				player.put("NumberOfCards", NumberOfCards-1);
+
+				// not needed if the game ends, put the new card to discarded array
+				JSONObject CardsInfo = (JSONObject) obj.get("CardsInfo");
+				JSONArray DiscardedCards = (JSONArray) CardsInfo.get("DiscardedCards");
+				DiscardedCards.add(playCard);
+			}
+			
+			boardInfo.put("OpenCard", playCard);
+			
+			cls.updateGameFile(obj, roomFile);
+			JSONObject tempJson = new JSONObject();
+			tempJson.put("RoomInfo", obj.get("RoomInfo"));
+			tempJson.put("BoardInfo", obj.get("BoardInfo"));
+			out.print(tempJson);
+			out.flush();
+			
+		}else{
+			System.out.println("Not a match");
+			out.println("<playCard Failed: No Match/>");
+			out.flush();
+		}
+		
 	}
 
 	private static void StartGame(String s, PrintWriter out) throws IOException {
@@ -299,8 +453,10 @@ public class UnoServer {
 			boolean unoStatus = (boolean) player.get("Uno");
 			if(!unoStatus){ // if the player has not pressed uno yet
 				if(clientName.equals(playerName)){ // if the player himself pressed uno
+					System.out.println("'"+clientName + "' pressed on uno");
 					player.put("Uno", true);
 				}else{ // give player 2 cards
+					System.out.println("'"+clientName + "' pressed on uno button on " + playerName +" : +2");
 					JSONObject CardsInfo = (JSONObject) obj.get("CardsInfo");
 					JSONObject tempCardsInfo = cls.UpdateCardsInfo(CardsInfo, giveCards); // update the list if avilableCards is less then (i)
 
@@ -315,13 +471,17 @@ public class UnoServer {
 					player.put("Cards", cards);
 					player.put("NumberOfCards", cards.size());
 				}
+			}else{
+				System.out.println("'"+clientName + "' pressed uno on '" + playerName +"': player already pressed on uno");
 			}
+		}else{
+			System.out.println("'"+clientName + "' pressed uno on '" + playerName +"': cards > 1");
 		}
 		cls.updateGameFile(obj, roomName+".txt");
 		
 		JSONObject tempJson = new JSONObject();
 		tempJson.put("RoomInfo", obj.get("RoomInfo"));
-		tempJson.put("RoomInfo", obj.get("BoardInfo"));
+		tempJson.put("BoardInfo", obj.get("BoardInfo"));
 		out.print(tempJson);
 		out.flush();
 		
@@ -426,7 +586,7 @@ public class UnoServer {
 						tempJson.put("RoomInfo", newObj.get("RoomInfo"));
 						out.print(tempJson);
 						out.flush();
-						System.out.println("Successfully join room: "+ newObj);
+						System.out.println("'" + playerName + "' Successfully join room: "+ newObj);
 					}
 					else if(rdy < cap){ // if player want to join a new Game Room
 						changePlayerTitle = true;

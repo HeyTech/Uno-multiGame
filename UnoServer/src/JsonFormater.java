@@ -49,7 +49,6 @@ public class JsonFormater {
 		JSONObject boardInfo = new JSONObject();
 		boardInfo.put("OpenCard", "");
 		boardInfo.put("CurrentTurn", "");
-		boardInfo.put("NextTurn", "");
 		boardInfo.put("Blocked", "");
 
 		boardInfo.put("TurnTime", new Integer(10));
@@ -68,6 +67,7 @@ public class JsonFormater {
 		Collections.shuffle(cardArr);
 		cardsInfo.put("AvailableCards", cardArr);
 		cardsInfo.put("DiscardedCards", new JSONArray());
+		cardsInfo.put("Reverse", 1);
 		
 		
 		obj.put("RoomInfo", roomInfo);
@@ -310,7 +310,7 @@ public class JsonFormater {
 		
 		while(!openCardNotAWildCard){ // choose a opencard that is not a wild card
 			openCard = avilableCards.get(k);
-			if("cpsr".indexOf(openCard.charAt(1)) == -1){ // "cpsr" = wild cards
+			if("cpsr".indexOf(openCard.charAt(1)) == -1){ // "  " = wild cards
 				System.out.println("OpenCard: "+ openCard);
 				BoardInfo.put("OpenCard", openCard);
 
@@ -328,10 +328,27 @@ public class JsonFormater {
 		String mode = (String) roomInfo.get("Mode");
 		if(mode.toLowerCase().equals("single")){
 			List<String> tempPlayers = (List<String>) roomInfo.get("Players");
+			System.out.println("Players before shuffle: " + Arrays.toString(tempPlayers.toArray()));
 			Collections.shuffle(tempPlayers);
-			roomInfo.put("Players", tempPlayers);
-		}
+			System.out.println("Players after shuffle: " + Arrays.toString(tempPlayers.toArray()));
 
+			roomInfo.put("Players", tempPlayers);
+		}else if(mode.toLowerCase().contains("v")){
+			JSONObject teams = (JSONObject) roomInfo.get("Teams");
+			List<String>  teamA = (List<String>) teams.get("TeamA");
+			List<String>  teamB = (List<String>) teams.get("TeamB");
+			Collections.shuffle(teamA);
+			Collections.shuffle(teamB);
+			
+			JSONArray tempPlayers =  new JSONArray(); 
+			for(int i = 0; i < teamA.size(); i++){
+				tempPlayers.add(teamA.get(i));
+				tempPlayers.add(teamB.get(i));
+			}
+			roomInfo.put("Players", tempPlayers);
+			
+		}
+		
 		JSONArray players = (JSONArray) roomInfo.get("Players");
 		for(int i = 0; i <7; i++){
 			for(int p = 0;  p < players.size(); p++){
@@ -355,7 +372,6 @@ public class JsonFormater {
 		
 		// playing order 
 		BoardInfo.put("CurrentTurn", players.get(0));
-		BoardInfo.put("NextTurn", players.get(1));		
 		return obj;
 	}
 
