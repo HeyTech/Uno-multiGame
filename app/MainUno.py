@@ -108,7 +108,7 @@ class Application(tk.Frame):
             room_info = cards_string_json["RoomInfo"]
             board_info = cards_string_json["BoardInfo"]
             players = board_info["PlayersInfo"]
-            room_name = room_info["Name"]
+            room_name = room_info["RoomName"]
             folder_path = os.getcwd()
             collection = "Images"
             file_path = os.path.join(folder_path, collection)
@@ -189,7 +189,7 @@ class Application(tk.Frame):
         else:
             room_message = json.loads(room_message)
             self.go_to_wait_frame(room_message)
-            #self.game_play()
+            #self.game_play(room_message)
 
     def go_back_to_game_mode(self, roomname, join_room):
         to_server = "<LeaveRoom " + "\'" + str(roomname) + "\'"
@@ -259,18 +259,16 @@ class Application(tk.Frame):
         ready_players = decoded_server["ReadyPlayers"]
         room_name = decoded_server["RoomName"]
 
-        def start_game_to_server(roomname):
+        def start_game_to_server(roomname, joinroom):
             start_game_message = "<StartGame '" + roomname + "\'/>"
             self.start_game_response_decoded = self.client.send_server_request(start_game_message).decode()
             print(self.start_game_response_decoded)
-            self.start_game_response = json.loads(self.start_game_response_decoded)
-            roominfo = (self.start_game_response["RoomInfo"])
-            game_status = roominfo["GameStarted"]
-            print(game_status)
-            if game_status:
-                self.game_play(self.start_game_response)
+            if 'Failed' in self.start_game_response_decoded:
+                self.go_to_wait_frame(joinroom)
             else:
-                self.go_to_wait_frame(self.start_game_response)
+                self.start_game_response = json.loads(self.start_game_response_decoded)
+                self.game_play(self.start_game_response)
+
 
         def getting_ready():
             ready_message = "<GettingReady '" + room_name + '\' \'' + self.player_name + '\'/>'
@@ -315,7 +313,7 @@ class Application(tk.Frame):
             self.exit_button = tk.Button(self, text="Exit", command=self.exit)
             self.exit_button.pack(side='bottom')
         if admin == self.player_name:
-            start_game = tk.Button(self, text="Start Game", command=lambda rm=room_name: start_game_to_server(rm))
+            start_game = tk.Button(self, text="Start Game", command=lambda rm=room_name: start_game_to_server(rm, join_room))
             start_game.pack(side='bottom')
         back_to_join_room_page = tk.Button(self, text="Leave Room")
         back_to_join_room_page["command"] = lambda: self.go_back_to_game_mode(room_name, join_room)
