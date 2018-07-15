@@ -174,7 +174,7 @@ public class UnoServer {
 					ExitGame(clientName, s, out, client_ins, client_inps, client_outs, theConnections, i);
 				}else if(s.startsWith("<FetchGameRoom ")) {
 					// "<FetchGameRoom 'roomName'/>"
-					String roomFile = s.split("'")[1];
+					String roomFile = s.split("'")[1]+ ".txt";
 					
 					JsonFormater cls = new JsonFormater();
 					JSONObject obj =  cls.FetchGameInfo(roomFile);
