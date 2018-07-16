@@ -91,6 +91,18 @@ class Application(tk.Frame):
         new_card_return_from_server = json.loads(self.client.send_server_request(new_card_message).decode())
         print(new_card_return_from_server)
 
+    def fetch_game_to_server(self, roomname, joinroom):
+        fetch_game_message = "<FetchGameRoom '" + roomname + "'/>"
+        self.fetch_game_decoded = self.client.send_server_request(fetch_game_message).decode()
+        print(self.fetch_game_decoded)
+        self.fetch_game_response = json.loads(self.fetch_game_decoded)
+        room_info = self.fetch_game_response["RoomInfo"]
+        game_status = room_info["GameStarted"]
+        if game_status:
+            self.game_play(self.fetch_game_response)
+        else:
+            self.go_to_wait_frame(joinroom)
+
     def game_play(self, game_start):
         #while(1):
             #game_start = input('mujtaba is the stupid: ')
@@ -169,7 +181,8 @@ class Application(tk.Frame):
                 open_card_label = tk.Label(self, image=open_card_img)
                 open_card_label.image = open_card_img
                 open_card_label.pack(anchor=tk.CENTER)
-
+            fetch_game_info = tk.Button(self, text="Fetch Game Information", command=lambda rm=room_name: self.fetch_game_to_server(rm, join_room))
+            fetch_game_info.pack(side='bottom')
 
     def get_name(self):
         name_of_the_room = self.room_name.get()
@@ -270,6 +283,8 @@ class Application(tk.Frame):
                 self.game_play(self.start_game_response)
 
 
+
+
         def getting_ready():
             ready_message = "<GettingReady '" + room_name + '\' \'' + self.player_name + '\'/>'
             self.ready_message = json.loads((self.client.send_server_request(ready_message)).decode())
@@ -315,6 +330,9 @@ class Application(tk.Frame):
         if admin == self.player_name:
             start_game = tk.Button(self, text="Start Game", command=lambda rm=room_name: start_game_to_server(rm, join_room))
             start_game.pack(side='bottom')
+        else:
+            fetch_game_info = tk.Button(self, text="Fetch Game Information", command=lambda rm=room_name: self.fetch_game_to_server(rm, join_room))
+            fetch_game_info.pack(side='bottom')
         back_to_join_room_page = tk.Button(self, text="Leave Room")
         back_to_join_room_page["command"] = lambda: self.go_back_to_game_mode(room_name, join_room)
         back_to_join_room_page.pack(side='bottom')
