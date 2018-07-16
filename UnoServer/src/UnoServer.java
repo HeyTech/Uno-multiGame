@@ -24,7 +24,6 @@ public class UnoServer {
 	private static HashMap<String,Scanner> client_ins = new HashMap<String,Scanner>();
 	private static HashMap<String,InputStream> client_inps = new HashMap<String,InputStream>();
 	private static HashMap<String,PrintWriter> client_outs = new HashMap<String,PrintWriter>();
-	private static JSONObject playerData;
 
 	public static void main(String[] args)throws java.io.FileNotFoundException, java.io.IOException, JSONException  {
 		int port = 4444;
@@ -195,49 +194,50 @@ public class UnoServer {
 
 	private static void FetchGameRoom(String s, String clientName, PrintWriter out) {
 		
-		
-		String roomFile = s.split("'")[1]+ ".txt";
+		String roomFile =s.split("'")[1];
 		JsonFormater cls = new JsonFormater();
 		JSONObject obj =  cls.FetchGameInfo(roomFile);
 		JSONObject roomInfo = (JSONObject) obj.get("RoomInfo");
 		JSONObject boardInfo = (JSONObject) obj.get("BoardInfo");
-		JSONObject playersInfo = (JSONObject) obj.get("PlayersInfo");
-		
+		JSONObject playersInfo = (JSONObject) boardInfo.get("PlayersInfo");
+
 		if(roomInfo.get("Mode").equals("Single")){ // if the mode is single then just send for the individual player (ClientName)
-			for(Iterator it = playersInfo.keySet().iterator(); it.hasNext();){
+			for(Iterator it = playersInfo.keySet().iterator(); it.hasNext();){ 
+				String pName = (String) it.next();
 				if(!it.toString().equals(clientName)){
-					playerData = (JSONObject) playersInfo.get(it.toString());
-					playerData.put("Cards", "");
+					JSONObject player = (JSONObject) playersInfo.get(pName);
+					player.put("Cards", "");
 				}				
 			}
 
 		}else{ // if game mode is xVx, send only cards for people in the same team
 			JSONObject teams = (JSONObject) roomInfo.get("Teams");
-			ArrayList hideNames = new ArrayList();
-			
+			ArrayList<String> hideNames = new ArrayList<String>();
+
 			for(Iterator it = teams.keySet().iterator(); it.hasNext();){
 				String key = (String) it.next();
 				JSONArray team = (JSONArray) teams.get(key.toString());
-				if(!team.contains("clinetName")){
+				if(!team.contains(clientName)){
 					hideNames.addAll(team);
 				}
 			}
-			
+
 			System.out.println(hideNames.toString());
 			for(int i = 0 ; i < hideNames.size(); i++){
-				JSONObject player = (JSONObject) playersInfo.get(hideNames.get(i).toString());
+				String pName = (String) hideNames.remove(0);
+				JSONObject player = (JSONObject) playersInfo.get(pName.toString());
 				player.put("Cards", "");
 			}
-			
+
 		}
-				
-		
+
+
 		JSONObject tempJson = new JSONObject();
 		tempJson.put("RoomInfo", roomInfo);
 		tempJson.put("BoardInfo", boardInfo);
 		out.print(tempJson);
 		out.flush();
-		
+
 	}
 
 	private static void PlayCard(String s, String clientName, PrintWriter out) throws IOException {
@@ -247,74 +247,74 @@ public class UnoServer {
 		JSONObject obj =  cls.FetchGameInfo(roomFile);
 		JSONObject boardInfo = (JSONObject) obj.get("BoardInfo");
 		String currentTurn = (String) boardInfo.get("CurrentTurn");
-		
+
 		if(currentTurn.equals(clientName)){
 			String playCard = s.split("'")[3];
-	
+
 			List<String> tempCardsToBlockedPlayer = null;
 			boolean playable = false;
 			boolean blockable = false;
 			boolean reversible = false;
 			int giveCards = 0;
-	
-		
+
+
 			JSONObject roomInfo = (JSONObject) obj.get("RoomInfo");
 			JSONObject cardsInfo =(JSONObject) obj.get("CardsInfo");
 			String openCard = (String) boardInfo.get("OpenCard");
-	
+
 			if("wc".indexOf(playCard.charAt(0)) == 0){ // wild cards 4+
 				playable = blockable = true; giveCards = 4;
 				System.out.println("1 play, give 4+ to next, block next");
-	
+
 			}else if("wc".indexOf(playCard.charAt(0)) == 1){ // wild card Change color
 				playable = true;
 				System.out.println("2 change color");
-	
+
 			}else if(openCard.indexOf(playCard.charAt(0)) == 0){ // if open card and new playCard are the same color
 				playable = true;
 				if("prs".indexOf(playCard.charAt(1)) == 0){ // same color 2+
 					blockable = true;
 					giveCards = 2;
 					System.out.println("same color 2+");
-	
+
 				}else if("prs".indexOf(playCard.charAt(1)) == 1){ // same color reverse
 					reversible = true;
 					System.out.println("same color reverse");
-	
+
 				}else if("prs".indexOf(playCard.charAt(1)) == 2){ // same color stop(block)
 					System.out.println("same color block");
 					blockable = true;	
 				}
-	
+
 			} else if(openCard.indexOf(playCard.charAt(1)) == 1){ // Same number card
 				System.out.println("4 Same number card");
 				playable = true;
 			}
-	
+
 			if(playable){
-	
+
 				JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");			
 				int blocked = 0;
-	
+
 				if(reversible){ // just reverse play
 					int reverse = (int) cardsInfo.get("Reverse");
 					cardsInfo.put("Reverse", reverse*(-1));
-	
+
 				}else if(blockable){
 					blocked = 1;
 					if(giveCards > 0){
 						JSONObject tempCardsInfo = cls.UpdateCardsInfo(cardsInfo, giveCards); // update the list if avilableCards is less then giveCards
-	
+
 						List<String> AvailableCards = (List<String>) tempCardsInfo.get("AvailableCards");
 						List<String> DiscardedCards = (List<String>) tempCardsInfo.get("DiscardedCards");
-	
+
 						cardsInfo.put("AvailableCards", AvailableCards);
 						cardsInfo.put("DiscardedCards", DiscardedCards);	
-	
+
 						tempCardsToBlockedPlayer = (List<String>) tempCardsInfo.get("giveCards");
 					}
 				}
-	
+
 				/* To assign next player to play */
 				int cIndex = readyPlayers.indexOf(currentTurn);
 				int reverse = (int) cardsInfo.get("Reverse");
@@ -323,14 +323,14 @@ public class UnoServer {
 				if(reverse == 1){
 					nextIndex = (cIndex + reverse + blocked)%readyPlayers.size();
 					giveCardsToPlayer = (cIndex + reverse)%readyPlayers.size();
-	
+
 				}else{
 					nextIndex = (readyPlayers.size() + (cIndex + reverse - blocked))%readyPlayers.size();
 					giveCardsToPlayer = (readyPlayers.size() + (cIndex + reverse))%readyPlayers.size();
-	
+
 				}
 				boardInfo.put("CurrentTurn", readyPlayers.get(nextIndex)); // new CUrrentTurn (for next round)
-	
+
 				if(giveCards > 0){
 					String playerName = (String) readyPlayers.get(giveCardsToPlayer);
 					JSONObject playersInfo = (JSONObject) boardInfo.get("PlayersInfo");
@@ -340,12 +340,12 @@ public class UnoServer {
 					player.put("Cards", cards);
 					player.put("NumberOfCards", cards.size());
 				}
-	
-	
+
+
 				// every time a playable card plays
 				JSONObject playerInfo = (JSONObject) boardInfo.get("PlayersInfo");
 				JSONObject player = (JSONObject) playerInfo.get(clientName);
-	
+
 				// check if player won game
 				int NumberOfCards = (int) player.get("NumberOfCards");
 				if(NumberOfCards == 0){
@@ -354,19 +354,19 @@ public class UnoServer {
 					System.out.println("GAME ENDED!!!!! " + clientName + "won with score:" + (score +1));
 					out.println("<playCard WON: MATCH OVER/>");
 					out.flush();
-	
+
 				}else{
 					player.put("NumberOfCards", NumberOfCards-1);
-	
+
 					// not needed if the game ends, put the new card to discarded array
 					JSONObject CardsInfo = (JSONObject) obj.get("CardsInfo");
 					JSONArray DiscardedCards = (JSONArray) CardsInfo.get("DiscardedCards");
 					DiscardedCards.add(playCard);
 				}
-	
+
 				boardInfo.put("OpenCard", playCard);
 			}
-	}
+		}
 		cls.updateGameFile(obj, roomFile);
 		JSONObject tempJson = new JSONObject();
 		tempJson.put("RoomInfo", obj.get("RoomInfo"));
