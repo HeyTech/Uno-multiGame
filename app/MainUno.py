@@ -70,26 +70,33 @@ class Application(tk.Frame):
         from_server = (self.client.send_server_request("<Exit/>")).decode()
         if "Successfully" in from_server:
             sys.exit()
+    def winning_page(self):
+        pass
 
     def putdowncard_to_server(self, card, room):
         message_to_server_to_throw_cards = "<PlayingCard " + "\'" + room + "\' \'" + card + "\'/>"
         print(message_to_server_to_throw_cards)
-        #put_down_card_to_server = self.client.send_server_request(message_to_server_to_throw_cards)
-        #print(put_down_card_to_server)
+        put_down_card_to_server = self.client.send_server_request(message_to_server_to_throw_cards).decode()
+        print(put_down_card_to_server)
+        if "Over" in put_down_card_to_server:
+            self.winning_page()
+        else:
+            put_down_from_server = json.loads(put_down_card_to_server)
+            self.game_play(put_down_from_server)
 
     def uno_to_server(self, roomname, player):
         uno_message = "<Uno " + "\'" + roomname + "\' " + "\'" + player + "\'/>"
         print(uno_message)
-        #self.game_play()
         uno_return_from_server = json.loads(self.client.send_server_request(uno_message).decode())
         print(uno_return_from_server)
+        self.game_play(uno_return_from_server)
 
     def new_card_to_server(self,roomname):
         new_card_message = "<NewCard " + "\'" + roomname + "\'/>"
         print(new_card_message)
-        #self.game_play()
         new_card_return_from_server = json.loads(self.client.send_server_request(new_card_message).decode())
         print(new_card_return_from_server)
+        self.game_play(new_card_return_from_server)
 
     def fetch_game_to_server(self, roomname, joinroom):
         fetch_game_message = "<FetchGameRoom '" + roomname + "'/>"
@@ -135,7 +142,7 @@ class Application(tk.Frame):
                 cards = (players[player]["Cards"])
                 number_of_cards = (players[player]["NumberOfCards"])
 
-                if not cards:
+                if player != self.player_name:
                     player_name = player
                     player_frame = tk.LabelFrame(root)
                     player_frame.pack(side=side[i])
@@ -181,7 +188,7 @@ class Application(tk.Frame):
                 open_card_label = tk.Label(self, image=open_card_img)
                 open_card_label.image = open_card_img
                 open_card_label.pack(anchor=tk.CENTER)
-            fetch_game_info = tk.Button(self, text="Fetch Game Information", command=lambda rm=room_name: self.fetch_game_to_server(rm, join_room))
+            fetch_game_info = tk.Button(self, text="Fetch Game Information", command=lambda rm=room_name: self.fetch_game_to_server(rm, cards_string_json))
             fetch_game_info.pack(side='bottom')
 
     def get_name(self):
