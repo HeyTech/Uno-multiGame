@@ -30,7 +30,7 @@ class Application(tk.Frame):
                                           font=("Arial Bold", 35), foreground='black', justify='center')
         self.label_welcome_uno.pack()
 
-        self.image = Image.open("images/download.png")
+        self.image = Image.open("images/download.gif")
         self.image = self.image.resize((500, 500), Image.ANTIALIAS)
         self.img_copy = self.image.copy()
         self.background_image = ImageTk.PhotoImage(self.img_copy)
@@ -131,10 +131,10 @@ class Application(tk.Frame):
             folder_path = os.getcwd()
             collection = "Images"
             file_path = os.path.join(folder_path, collection)
-            back_image = 'cb.png'
+            back_image = 'cb.gif'
             back_image_path = os.path.join(file_path, back_image)
             side = ["left", "right", "top", "bottom"]
-            open_card = board_info["OpenCard"] + '.png'
+            open_card = board_info["OpenCard"] + '.gif'
             open_card_path = os.path.join(file_path, open_card)
 
             i = 0
@@ -165,7 +165,7 @@ class Application(tk.Frame):
                     player_label.pack(side='top')
                     images_list = []
                     for card in team_cards:
-                        image_name = card + ".png"
+                        image_name = card + ".gif"
                         image_path = os.path.join(file_path, image_name)
                         if os.path.exists(image_path):
                             img = tk.PhotoImage(file=image_path)
