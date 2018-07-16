@@ -193,8 +193,8 @@ public class UnoServer {
 	}
 
 	private static void FetchGameRoom(String s, String clientName, PrintWriter out) {
-		
-		String roomFile =s.split("'")[1];
+
+		String roomFile =s.split("'")[1] + ".txt";
 		JsonFormater cls = new JsonFormater();
 		JSONObject obj =  cls.FetchGameInfo(roomFile);
 		JSONObject roomInfo = (JSONObject) obj.get("RoomInfo");
@@ -204,7 +204,7 @@ public class UnoServer {
 		if(roomInfo.get("Mode").equals("Single")){ // if the mode is single then just send for the individual player (ClientName)
 			for(Iterator it = playersInfo.keySet().iterator(); it.hasNext();){ 
 				String pName = (String) it.next();
-				if(!it.toString().equals(clientName)){
+				if(!pName.equals(clientName)){
 					JSONObject player = (JSONObject) playersInfo.get(pName);
 					player.put("Cards", "");
 				}				
@@ -228,10 +228,8 @@ public class UnoServer {
 				JSONObject player = (JSONObject) playersInfo.get(pName.toString());
 				player.put("Cards", "");
 			}
-
 		}
-
-
+		
 		JSONObject tempJson = new JSONObject();
 		tempJson.put("RoomInfo", roomInfo);
 		tempJson.put("BoardInfo", boardInfo);
@@ -367,6 +365,7 @@ public class UnoServer {
 				boardInfo.put("OpenCard", playCard);
 			}
 		}
+
 		cls.updateGameFile(obj, roomFile);
 		JSONObject tempJson = new JSONObject();
 		tempJson.put("RoomInfo", obj.get("RoomInfo"));
@@ -468,7 +467,7 @@ public class UnoServer {
 
 		JSONObject tempJson = new JSONObject();
 		tempJson.put("RoomInfo", obj.get("RoomInfo"));
-		tempJson.put("RoomInfo", obj.get("BoardInfo"));
+		tempJson.put("BoardInfo", obj.get("BoardInfo"));
 		out.print(tempJson);
 		out.flush();
 
