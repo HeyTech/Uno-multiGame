@@ -30,7 +30,7 @@ class Application(tk.Frame):
                                           font=("Arial Bold", 35), foreground='black', justify='center')
         self.label_welcome_uno.pack()
 
-        self.image = Image.open("images/download.gif")
+        self.image = Image.open("images/download.png")
         self.image = self.image.resize((500, 500), Image.ANTIALIAS)
         self.img_copy = self.image.copy()
         self.background_image = ImageTk.PhotoImage(self.img_copy)
@@ -131,10 +131,10 @@ class Application(tk.Frame):
             folder_path = os.getcwd()
             collection = "Images"
             file_path = os.path.join(folder_path, collection)
-            back_image = 'cb.gif'
+            back_image = 'cb.png'
             back_image_path = os.path.join(file_path, back_image)
             side = ["left", "right", "top", "bottom"]
-            open_card = board_info["OpenCard"] + '.gif'
+            open_card = board_info["OpenCard"] + '.png'
             open_card_path = os.path.join(file_path, open_card)
 
             i = 0
@@ -149,10 +149,10 @@ class Application(tk.Frame):
                     player_button = tk.Button(player_frame, text=player_name, command=lambda pl_name=player_name: self.uno_to_server(room_name, pl_name))
                     player_button.pack(side='top')
                     if os.path.exists(back_image_path):
-                        back_img = tk.PhotoImage(file=back_image_path)
-                        resize_image_back = back_img.subsample(2, 2)
-                        image_label_for_other_players = tk.Label(player_frame, image=resize_image_back)
-                        image_label_for_other_players.image = resize_image_back
+                        back_img = Image.open(back_image_path)
+                        back_img_dis = ImageTk.PhotoImage(back_img)
+                        image_label_for_other_players = tk.Label(player_frame, image=back_img_dis)
+                        image_label_for_other_players.image = back_img_dis
                         image_label_for_other_players.pack(side='bottom')
                         no_of_cards = tk.Label(player_frame, text=int(number_of_cards))
                         no_of_cards.pack(side='bottom')
@@ -163,20 +163,19 @@ class Application(tk.Frame):
                     player_frame.pack(side=side[i])
                     player_label = tk.Label(player_frame, text=player_name)
                     player_label.pack(side='top')
-                    images_list = []
                     for card in team_cards:
-                        image_name = card + ".gif"
+                        image_name = card + ".png"
                         image_path = os.path.join(file_path, image_name)
                         if os.path.exists(image_path):
-                            img = tk.PhotoImage(file=image_path)
-                            resize_image = img.subsample(2, 2)
+                            img = Image.open(image_path)
+                            img_dis = ImageTk.PhotoImage(img)
                             if player_name == self.player_name:
-                                label = tk.Button(player_frame, image=resize_image, command= lambda card_name=card : self.putdowncard_to_server(card_name, room_name))
-                                label.image = resize_image
+                                label = tk.Button(player_frame, image=img_dis, command= lambda card_name=card : self.putdowncard_to_server(card_name, room_name))
+                                label.image = img_dis
                                 label.pack(side='left', padx=10, pady=10)
                             else:
-                                label = tk.Button(player_frame, image=resize_image, command= lambda card_name=card : self.putdowncard_to_server(card_name, room_name))
-                                label.image = resize_image
+                                label = tk.Button(player_frame, image=img_dis, command= lambda card_name=card : self.putdowncard_to_server(card_name, room_name))
+                                label.image = img_dis
                                 label.pack(side='left', padx=10, pady=10)
                 i +=1
             self.new_card_button = tk.Button(self, text="New Card", command=lambda: self.new_card_to_server(room_name))
@@ -184,9 +183,10 @@ class Application(tk.Frame):
             self.new_card_button.pack(side='left')
             self.uno_button.pack(side='right')
             if os.path.exists(open_card_path):
-                open_card_img = tk.PhotoImage(file=open_card_path).subsample(2, 2)
-                open_card_label = tk.Label(self, image=open_card_img)
-                open_card_label.image = open_card_img
+                open_card_img = Image.open(open_card_path)
+                open_card_dis = ImageTk.PhotoImage(open_card_img)
+                open_card_label = tk.Label(self, image=open_card_dis)
+                open_card_label.image = open_card_dis
                 open_card_label.pack(anchor=tk.CENTER)
             fetch_game_info = tk.Button(self, text="Fetch Game Information", command=lambda rm=room_name: self.fetch_game_to_server(rm, cards_string_json))
             fetch_game_info.pack(side='bottom')
