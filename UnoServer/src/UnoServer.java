@@ -63,7 +63,7 @@ public class UnoServer {
 					Boolean alreadyIdle = false;
 
 					while((line = reader.readLine()) != null){
-						if(line.startsWith("<OnlinePlayer name='" + id_name + "' status=")){
+						if(line.startsWith("<OnlinePlayer name='" + id_name + "'")){
 							alreadyIdle = true;
 							break;
 						}
@@ -124,6 +124,7 @@ public class UnoServer {
 			if(is.available()>0){
 				s = in.nextLine();
 				s = s.replaceAll(" / HTTP/1.0", "");
+				System.out.println(s);
 				clientName = theClients.get(i);
 				if(s.startsWith("<CreateRoom")){
 					System.out.println(clientName + " asks to create a new room.");
@@ -159,9 +160,9 @@ public class UnoServer {
 					System.out.println("'"+clientName + "' draw a new card.");
 					NewCard(s, clientName, out);
 					// InformPlayers()         //*******************************************************
-				}else if(s.startsWith("<PlayCard ")) {
-					// <PlayCard 'roomName' 'cardName'/>
-					PlayCard(s, clientName, out);
+				}else if(s.startsWith("<PlayingCard ")) {
+					// <PlayingCard 'roomName' 'cardName'/>
+					PlayingCard(s, clientName, out);
 
 					// InformPlayers()         //*******************************************************
 				}else if(s.startsWith("<LeaveRoom ")) {
@@ -230,6 +231,7 @@ public class UnoServer {
 			}
 		}
 		
+		System.out.println(obj);
 		JSONObject tempJson = new JSONObject();
 		tempJson.put("RoomInfo", roomInfo);
 		tempJson.put("BoardInfo", boardInfo);
@@ -238,16 +240,20 @@ public class UnoServer {
 
 	}
 
-	private static void PlayCard(String s, String clientName, PrintWriter out) throws IOException {
-		String roomFile = s.split("'")[1];
-
+	private static void PlayingCard(String s, String clientName, PrintWriter out) throws IOException {
+		String roomFile = s.split("'")[1] + ".txt";
+		String playCard = s.split("'")[3];
+		
 		JsonFormater cls = new JsonFormater();
 		JSONObject obj =  cls.FetchGameInfo(roomFile);
 		JSONObject boardInfo = (JSONObject) obj.get("BoardInfo");
 		String currentTurn = (String) boardInfo.get("CurrentTurn");
 
-		if(currentTurn.equals(clientName)){
-			String playCard = s.split("'")[3];
+		JSONObject playerInfo = (JSONObject) boardInfo.get("PlayersInfo");
+		JSONObject player = (JSONObject) playerInfo.get(clientName);
+		JSONArray pCards = (JSONArray) player.get("Cards");
+		
+		if(currentTurn.equals(clientName) & pCards.contains(playCard)){
 
 			List<String> tempCardsToBlockedPlayer = null;
 			boolean playable = false;
@@ -260,15 +266,15 @@ public class UnoServer {
 			JSONObject cardsInfo =(JSONObject) obj.get("CardsInfo");
 			String openCard = (String) boardInfo.get("OpenCard");
 
-			if("wc".indexOf(playCard.charAt(0)) == 0){ // wild cards 4+
+			if(playCard.contains("wc")){ // wild cards 4+
 				playable = blockable = true; giveCards = 4;
 				System.out.println("1 play, give 4+ to next, block next");
 
-			}else if("wc".indexOf(playCard.charAt(0)) == 1){ // wild card Change color
+			}else if(playCard.contains("cc")){ // wild card Change color
 				playable = true;
 				System.out.println("2 change color");
 
-			}else if(openCard.indexOf(playCard.charAt(0)) == 0){ // if open card and new playCard are the same color
+			}else if(openCard.indexOf(playCard.charAt(0)) > -1){ // if open card and new playCard are the same color
 				playable = true;
 				if("prs".indexOf(playCard.charAt(1)) == 0){ // same color 2+
 					blockable = true;
@@ -290,12 +296,20 @@ public class UnoServer {
 			}
 
 			if(playable){
-
+				int nextIndex = 0;
+				int giveCardsToPlayer = 0;
+				
 				JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");			
 				int blocked = 0;
-
+				long reverseLong;
+				int reverse;
+				
+				long scoreLong;
+				int score;
+				
 				if(reversible){ // just reverse play
-					int reverse = (int) cardsInfo.get("Reverse");
+					reverseLong = (long) cardsInfo.get("Reverse");
+					reverse = ((Long) reverseLong).intValue();
 					cardsInfo.put("Reverse", reverse*(-1));
 
 				}else if(blockable){
@@ -315,9 +329,9 @@ public class UnoServer {
 
 				/* To assign next player to play */
 				int cIndex = readyPlayers.indexOf(currentTurn);
-				int reverse = (int) cardsInfo.get("Reverse");
-				int nextIndex = 0;
-				int giveCardsToPlayer = 0;
+				reverseLong = (long) cardsInfo.get("Reverse");
+				reverse = ((Long) reverseLong).intValue();
+
 				if(reverse == 1){
 					nextIndex = (cIndex + reverse + blocked)%readyPlayers.size();
 					giveCardsToPlayer = (cIndex + reverse)%readyPlayers.size();
@@ -331,23 +345,21 @@ public class UnoServer {
 
 				if(giveCards > 0){
 					String playerName = (String) readyPlayers.get(giveCardsToPlayer);
-					JSONObject playersInfo = (JSONObject) boardInfo.get("PlayersInfo");
-					JSONObject player = (JSONObject) playersInfo.get(playerName);
-					List<String> cards = (List<String>) player.get("Cards");
+					JSONObject playerGiveCards = (JSONObject) playerInfo.get(playerName);
+					List<String> cards = (List<String>) playerGiveCards.get("Cards");
 					cards.addAll(tempCardsToBlockedPlayer);
-					player.put("Cards", cards);
-					player.put("NumberOfCards", cards.size());
+					playerGiveCards.put("Cards", cards);
+					playerGiveCards.put("NumberOfCards", cards.size());
 				}
 
-
-				// every time a playable card plays
-				JSONObject playerInfo = (JSONObject) boardInfo.get("PlayersInfo");
-				JSONObject player = (JSONObject) playerInfo.get(clientName);
-
 				// check if player won game
-				int NumberOfCards = (int) player.get("NumberOfCards");
-				if(NumberOfCards == 0){
-					int score = (int)player.get("Score");
+				long NumberOfCardsLong = (long) player.get("NumberOfCards");
+				int NumberOfCards = ((Long) NumberOfCardsLong).intValue();
+				
+				if(NumberOfCards == 1){ // 1, because the current playing card  
+					scoreLong = (long)player.get("Score");
+					score = ((Long) scoreLong).intValue();
+					
 					player.put("Score", score +1);
 					System.out.println("GAME ENDED!!!!! " + clientName + "won with score:" + (score +1));
 					out.println("<playCard WON: MATCH OVER/>");
@@ -359,13 +371,15 @@ public class UnoServer {
 					// not needed if the game ends, put the new card to discarded array
 					JSONObject CardsInfo = (JSONObject) obj.get("CardsInfo");
 					JSONArray DiscardedCards = (JSONArray) CardsInfo.get("DiscardedCards");
+					
+					pCards.remove(playCard);
 					DiscardedCards.add(playCard);
 				}
 
 				boardInfo.put("OpenCard", playCard);
 			}
 		}
-
+		
 		cls.updateGameFile(obj, roomFile);
 		JSONObject tempJson = new JSONObject();
 		tempJson.put("RoomInfo", obj.get("RoomInfo"));
@@ -382,7 +396,9 @@ public class UnoServer {
 		JSONObject roomInfo = (JSONObject) obj.get("RoomInfo");
 		JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");
 		JSONArray players = (JSONArray) roomInfo.get("Players");
-		if(players.size() == readyPlayers.size()){
+		
+		//Assign player order
+		if(players.size() == readyPlayers.size()){ // check if all players are online (#ready == players online)
 			String mode = (String) roomInfo.get("Mode");
 			if(mode.toLowerCase().contains("v") & mode.length() == 3){ // to make teamGame dynamic (xVx)
 				JSONObject teams = (JSONObject) roomInfo.get("Teams");
@@ -422,10 +438,10 @@ public class UnoServer {
 			}
 
 
-
+			System.out.println(Newobj);
 			JSONObject tempJson = new JSONObject();
-			tempJson.put("RoomInfo", obj.get("RoomInfo"));
-			tempJson.put("BoardInfo", obj.get("BoardInfo"));
+			tempJson.put("RoomInfo", Newobj.get("RoomInfo"));
+			tempJson.put("BoardInfo", Newobj.get("BoardInfo"));
 			out.print(tempJson);
 			out.flush();
 		}
@@ -761,8 +777,8 @@ public class UnoServer {
 			String[] sArr = s.replace("/>", "").replace("<CreateRoom ", "").split("'");
 
 			String roomName = sArr[1];
-			String mode = ( sArr[3].length() < 2) ? "Single" : sArr[3];		 // To avoid errors that occur if mode not specified 	
-			String online = sArr[5];
+			String mode = ( sArr[3].equals("")) ? "Single" : sArr[3];		 // To avoid errors that occur if mode not specified 	
+			String cap = sArr[5];
 			String admin = sArr[7];
 
 
@@ -782,16 +798,17 @@ public class UnoServer {
 			reader.close();
 
 			if(nameNotFound){
+				//<Room Name='mujtaba' Mode='Single' Capacity='2/8' Player='mujtaba, Emily'/>
+
 				FileWriter writer = new FileWriter("uno.txt",true);
-				String temp = s.replace("/>", "").replace("<CreateRoom ", "");
-				String tempRoom = "<Room " +temp  + "/>";
+				String tempRoom = "<Room Name='" +roomName +"' Mode='" +mode+"' Capacity='"+cap+"' Player='"+admin+"'/>";
 				writer.write(tempRoom+"\n");
 				writer.close();
 
 
 				//To generate JSON String
 				JsonFormater cls = new JsonFormater();
-				JSONObject room = cls.generateRoomJson(roomName, mode, online, admin);
+				JSONObject room = cls.generateRoomJson(roomName, mode, cap, admin);
 				try (FileWriter gameFile = new FileWriter(roomName+".txt")) {
 					gameFile.write(room.toString());
 					System.out.println("Successfully Created Room: " + room);
@@ -799,6 +816,7 @@ public class UnoServer {
 
 					JSONObject tempJson = new JSONObject();
 					tempJson.put("RoomInfo", room.get("RoomInfo"));
+					tempJson.put("BoardInfo", room.get("BoardInfo"));
 					out.print(tempJson);
 				}
 				ChangeTitle(admin, "Created Room");

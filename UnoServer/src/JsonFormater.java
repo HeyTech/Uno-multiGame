@@ -331,8 +331,8 @@ public class JsonFormater {
 			System.out.println("Players before shuffle: " + Arrays.toString(tempPlayers.toArray()));
 			Collections.shuffle(tempPlayers);
 			System.out.println("Players after shuffle: " + Arrays.toString(tempPlayers.toArray()));
-
 			roomInfo.put("Players", tempPlayers);
+			
 		}else if(mode.toLowerCase().contains("v")){
 			JSONObject teams = (JSONObject) roomInfo.get("Teams");
 			List<String>  teamA = (List<String>) teams.get("TeamA");
