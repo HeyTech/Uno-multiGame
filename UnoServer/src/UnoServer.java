@@ -261,6 +261,8 @@ public class UnoServer {
 
 
 			JSONObject roomInfo = (JSONObject) obj.get("RoomInfo");
+			JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");			
+
 			JSONObject cardsInfo =(JSONObject) obj.get("CardsInfo");
 			String openCard = (String) boardInfo.get("OpenCard");
 
@@ -281,6 +283,9 @@ public class UnoServer {
 
 				}else if("prs".indexOf(playCard.charAt(1)) == 1){ // same color reverse
 					reversible = true;
+					if(readyPlayers.size() <= 2){ // if there are 2 only 2 players, than reverse block the player too
+						blockable = true;
+					}
 					System.out.println("same color reverse");
 
 				}else if("prs".indexOf(playCard.charAt(1)) == 2){ // same color stop(block)
@@ -297,7 +302,6 @@ public class UnoServer {
 				int nextIndex = 0;
 				int giveCardsToPlayerIndex = 0;
 				
-				JSONArray readyPlayers = (JSONArray) roomInfo.get("ReadyPlayers");			
 				int blocked = 0; // will change to 1 if a card is blockable
 				long reverseLong = 0; // will change to -1 if card is reversible
 				int reverse = 0; 
@@ -324,7 +328,7 @@ public class UnoServer {
 						cardsInfo.put("AvailableCards", AvailableCards);
 						cardsInfo.put("DiscardedCards", DiscardedCards);	
 
-						tempCardsToBlockedPlayer = (List<String>) tempCardsInfo.get("giveCards");
+						tempCardsToBlockedPlayer = (List<String>) tempCardsInfo.get("giveCards"); // a list of cards that will be given to the next player
 					}
 				}
 
