@@ -254,6 +254,7 @@ public class UnoServer {
 		// Check if it's the players current turn and if the player owns the playing card
 		if(currentTurn.equals(clientName) & pCards.contains(playCard)){
 			List<String> tempCardsToBlockedPlayer = null;
+			boolean pass = false;
 			boolean playable = false;
 			boolean blockable = false;
 			boolean reversible = false;
@@ -266,7 +267,11 @@ public class UnoServer {
 			JSONObject cardsInfo =(JSONObject) obj.get("CardsInfo");
 			String openCard = (String) boardInfo.get("OpenCard");
 
-			if(playCard.contains("wc")){ // wild cards 4+
+			if(playCard.equals(" ")){
+				pass = true;
+				playable = true;
+				
+			}else if(playCard.contains("wc")){ // wild cards 4+
 				playable = blockable = true; giveCards = 4;
 				System.out.println("Card: '"+playCard +"': give 4+ and block next");
 
@@ -356,48 +361,49 @@ public class UnoServer {
 				}
 				boardInfo.put("CurrentTurn", readyPlayers.get(nextIndex)); // new CUrrentTurn (for next round)
 
-				if(giveCards > 0){
-					String playerName = (String) readyPlayers.get(giveCardsToPlayerIndex);
-					JSONObject playerGiveCards = (JSONObject) playerInfo.get(playerName); // to get playername of
-					List<String> cards = (List<String>) playerGiveCards.get("Cards");
-					cards.addAll(tempCardsToBlockedPlayer);
-					playerGiveCards.put("Cards", cards);
-					playerGiveCards.put("NumberOfCards", cards.size());
-				}
-
-				// check if player won game
-				try{
-					NumberOfCardsLong = (long) player.get("NumberOfCards");
-					NumberOfCards = ((Long) NumberOfCardsLong).intValue();
-				}catch(Exception e){
-					NumberOfCards = (int) player.get("NumberOfCards");
-				}
-				
-				
-				if(NumberOfCards == 1){ // 1, because the current playing card  
+				if(!pass){ // If player didn't pass (empty card) 
+					if(giveCards > 0){
+						String playerName = (String) readyPlayers.get(giveCardsToPlayerIndex);
+						JSONObject playerGiveCards = (JSONObject) playerInfo.get(playerName); // to get playername of
+						List<String> cards = (List<String>) playerGiveCards.get("Cards");
+						cards.addAll(tempCardsToBlockedPlayer);
+						playerGiveCards.put("Cards", cards);
+						playerGiveCards.put("NumberOfCards", cards.size());
+					}
+	
+					// check if player won game
 					try{
-						scoreLong = (long)player.get("Score");
-						score =((Long) scoreLong).intValue(); 
+						NumberOfCardsLong = (long) player.get("NumberOfCards");
+						NumberOfCards = ((Long) NumberOfCardsLong).intValue();
 					}catch(Exception e){
-						score = (int) player.get("Score");
-					} 
+						NumberOfCards = (int) player.get("NumberOfCards");
+					}
 					
-					player.put("Score", score +1);
-					System.out.println("GAME ENDED!!!!! " + clientName + "won with score:" + (score +1));
-					out.println("<playCard WON: MATCH OVER/>");
-					out.flush();
-
-				}else{
-					player.put("NumberOfCards", NumberOfCards-1);
-
-					// not needed if the game ends, put the new card to discarded array
-					JSONObject CardsInfo = (JSONObject) obj.get("CardsInfo");
-					JSONArray DiscardedCards = (JSONArray) CardsInfo.get("DiscardedCards");
 					
-					pCards.remove(playCard);
-					DiscardedCards.add(playCard);
+					if(NumberOfCards == 1){ // 1, because the current playing card  
+						try{
+							scoreLong = (long)player.get("Score");
+							score =((Long) scoreLong).intValue(); 
+						}catch(Exception e){
+							score = (int) player.get("Score");
+						} 
+						
+						player.put("Score", score +1);
+						System.out.println("GAME ENDED!!!!! " + clientName + "won with score:" + (score +1));
+						out.println("<playCard WON: MATCH OVER/>");
+						out.flush();
+	
+					}else{
+						player.put("NumberOfCards", NumberOfCards-1);
+	
+						// not needed if the game ends, put the new card to discarded array
+						JSONObject CardsInfo = (JSONObject) obj.get("CardsInfo");
+						JSONArray DiscardedCards = (JSONArray) CardsInfo.get("DiscardedCards");
+						
+						pCards.remove(playCard);
+						DiscardedCards.add(playCard);
+					}
 				}
-
 				boardInfo.put("OpenCard", playCard);
 			}
 		}
