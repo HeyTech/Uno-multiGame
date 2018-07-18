@@ -111,12 +111,27 @@ class Application(tk.Frame):
         print(uno_return_from_server)
         self.game_play(uno_return_from_server)
 
+    def keep_play(self):
+        self.keep_play_choice = self.choice.get()
+
     def new_card_to_server(self,roomname):
         new_card_message = "<NewCard " + "\'" + roomname + "\'/>"
         print(new_card_message)
         new_card_return_from_server = json.loads(self.client.send_server_request(new_card_message).decode())
         print(new_card_return_from_server)
-        self.game_play(new_card_return_from_server)
+        self.choice = tk.StringVar()
+        keep_play_label = tk.Label(self, text="Decide what to do with new card")
+        keep_play_label.pack()
+        keep_button = tk.Radiobutton(self, text="keep", variable=self.choice, value="keep", command=self.keep_play)
+        keep_button.pack()
+        play_button = tk.Radiobutton(self, text="play", variable=self.choice, value="play", command=self.keep_play)
+        play_button.pack()
+        if self.keep_play_choice=="keep":
+            self.game_play(new_card_return_from_server)
+        else:
+            card = new_card_return_from_server["BoardInfo"]["PlayersInfo"][self.player_name]["Cards"][-1]
+            self.putdowncard_to_server(card, roomname)
+        # self.game_play(new_card_return_from_server)
 
     def fetch_game_to_server(self, roomname, joinroom):
         fetch_game_message = "<FetchGameRoom '" + roomname + "'/>"
