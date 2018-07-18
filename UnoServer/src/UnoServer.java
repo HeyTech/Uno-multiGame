@@ -268,33 +268,36 @@ public class UnoServer {
 
 			if(playCard.contains("wc")){ // wild cards 4+
 				playable = blockable = true; giveCards = 4;
-				System.out.println("1 play, give 4+ to next, block next");
+				System.out.println("Card: '"+playCard +"': give 4+ and block next");
 
 			}else if(playCard.contains("cc")){ // wild card Change color
 				playable = true;
-				System.out.println("2 change color");
+				System.out.println("Card: '"+playCard +"': change color");
 
 			}else if(openCard.indexOf(playCard.charAt(0)) > -1){ // if open card and new playCard are the same color
 				playable = true;
 				if("prs".indexOf(playCard.charAt(1)) == 0){ // same color 2+
+					System.out.println("Card: '"+playCard +"': Same color 2+");
 					blockable = true;
 					giveCards = 2;
-					System.out.println("same color 2+");
-
+					
 				}else if("prs".indexOf(playCard.charAt(1)) == 1){ // same color reverse
+					System.out.print("Card: '"+playCard +"': Same color reverse");
+
 					reversible = true;
 					if(readyPlayers.size() <= 2){ // if there are 2 only 2 players, than reverse block the player too
+						System.out.print(" and block (1v1)");
 						blockable = true;
 					}
-					System.out.println("same color reverse");
+					System.out.println("");
 
 				}else if("prs".indexOf(playCard.charAt(1)) == 2){ // same color stop(block)
-					System.out.println("same color block");
+					System.out.println("Card: '"+playCard +"': Same color block");
 					blockable = true;	
 				}
 
 			} else if(openCard.indexOf(playCard.charAt(1)) == 1){ // Same number card
-				System.out.println("4 Same number card");
+				System.out.println("Card: '"+playCard +"': Same number card");
 				playable = true;
 			}
 
@@ -399,6 +402,7 @@ public class UnoServer {
 			}
 		}
 		
+		System.out.println(obj);
 		cls.updateGameFile(obj, roomFile);
 		JSONObject tempJson = new JSONObject();
 		tempJson.put("RoomInfo", obj.get("RoomInfo"));
@@ -659,6 +663,7 @@ public class UnoServer {
 
 						JSONObject tempJson = new JSONObject();
 						tempJson.put("RoomInfo", newObj.get("RoomInfo"));
+						tempJson.put("BoardInfo", newObj.get("BoardInfo"));
 						out.print(tempJson);
 						out.flush();
 						System.out.println("'" + playerName + "' Successfully join room: "+ newObj);
