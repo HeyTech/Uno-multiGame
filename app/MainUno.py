@@ -5,6 +5,7 @@ import tkinter as tk
 import os
 import json
 from collections import OrderedDict
+import time, threading
 
 
 class Application(tk.Frame):
@@ -191,6 +192,7 @@ class Application(tk.Frame):
                 open_card_label = tk.Label(self, image=open_card_dis)
                 open_card_label.image = open_card_dis
                 open_card_label.pack(anchor=tk.CENTER)
+            #self.fetch_game_to_server(room_name, cards_string_json)
             fetch_game_info = tk.Button(self, text="Fetch Game Information", command=lambda rm=room_name: self.fetch_game_to_server(rm, cards_string_json))
             fetch_game_info.pack(side='bottom')
 
@@ -343,6 +345,7 @@ class Application(tk.Frame):
         else:
             fetch_game_info = tk.Button(self, text="Fetch Game Information", command=lambda rm=room_name: self.fetch_game_to_server(rm, join_room))
             fetch_game_info.pack(side='bottom')
+        #self.fetch_game_to_server(room_name, join_room)
         back_to_join_room_page = tk.Button(self, text="Leave Room")
         back_to_join_room_page["command"] = lambda: self.go_back_to_game_mode(room_name, join_room)
         back_to_join_room_page.pack(side='bottom')
