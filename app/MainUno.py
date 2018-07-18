@@ -61,7 +61,7 @@ class Application(tk.Frame):
         self.quit.config(bg='red')
         self.quit.pack(side="left")
 
-        self.label_welcome = tk.Label(text="login please")
+        self.label_welcome = tk.Label(self, text="login please")
         self.label_welcome.pack(side="bottom")
 
     def playing_page(self):
@@ -74,7 +74,26 @@ class Application(tk.Frame):
     def winning_page(self):
         pass
 
+    def chosen_color(self):
+        self.color_chosen = self.color.get()
+
     def putdowncard_to_server(self, card, room):
+        if card == "cc" or card == "wp":
+            color_label = tk.Label(self, text="Please choose the color")
+            color_label.pack(side='bottom')
+            self.color = tk.StringVar()
+            red_color = tk.Radiobutton(self, text="red", variable=self.color, value="red", command=self.chosen_color)
+            red_color.pack(side='bottom')
+            blue_color = tk.Radiobutton(self, text="blue", variable=self.color, value="blue", command=self.chosen_color)
+            blue_color.pack(side='bottom')
+            green_color = tk.Radiobutton(self, text="green", variable=self.color, value="green", command=self.chosen_color)
+            green_color.pack(side='bottom')
+            yellow_color = tk.Radiobutton(self, text="yellow", variable=self.color, value="yellow", command=self.chosen_color)
+            yellow_color.pack(side='bottom')
+            card = card + self.color_chosen[0]
+            print(card)
+        else:
+            card = card
         message_to_server_to_throw_cards = "<PlayingCard " + "\'" + room + "\' \'" + card + "\'/>"
         print(message_to_server_to_throw_cards)
         put_down_card_to_server = self.client.send_server_request(message_to_server_to_throw_cards).decode()
@@ -92,12 +111,27 @@ class Application(tk.Frame):
         print(uno_return_from_server)
         self.game_play(uno_return_from_server)
 
+    def keep_play(self):
+        self.keep_play_choice = self.choice.get()
+
     def new_card_to_server(self,roomname):
         new_card_message = "<NewCard " + "\'" + roomname + "\'/>"
         print(new_card_message)
         new_card_return_from_server = json.loads(self.client.send_server_request(new_card_message).decode())
         print(new_card_return_from_server)
-        self.game_play(new_card_return_from_server)
+        self.choice = tk.StringVar()
+        keep_play_label = tk.Label(self, text="Decide what to do with new card")
+        keep_play_label.pack()
+        keep_button = tk.Radiobutton(self, text="keep", variable=self.choice, value="keep", command=self.keep_play)
+        keep_button.pack()
+        play_button = tk.Radiobutton(self, text="play", variable=self.choice, value="play", command=self.keep_play)
+        play_button.pack()
+        if self.keep_play_choice=="keep":
+            self.game_play(new_card_return_from_server)
+        else:
+            card = new_card_return_from_server["BoardInfo"]["PlayersInfo"][self.player_name]["Cards"][-1]
+            self.putdowncard_to_server(card, roomname)
+        # self.game_play(new_card_return_from_server)
 
     def fetch_game_to_server(self, roomname, joinroom):
         fetch_game_message = "<FetchGameRoom '" + roomname + "'/>"
@@ -112,23 +146,13 @@ class Application(tk.Frame):
             self.go_to_wait_frame(joinroom)
 
     def game_play(self, game_start):
-        #while(1):
-            #game_start = input('mujtaba is the stupid: ')
-
             self.clean_frame()
             cards_string_json = game_start
-            # cards_string_json = {"RoomInfo":{"Mode":"2v2","Teams":{"TeamA":["Mujtaba","Mona"],"TeamB":["Ranju","Nandu"]},"Admin":"Mona",
-            #                                  "Online":"4/4","Name":"Naai 1123","Players":["Mona","Mujtaba","Ranju","Nandu"],
-            #                                  "ReadyPlayers":["Mujtaba","Ranju"],"GameStarted":True},
-            #                      "BoardInfo":{"OpenCard":"y5","CurrentTurn":"Ranju","Blocked":"Nandu","NextTurn":"Mona","TurnTime":"10",
-            #                                   "PlayersInfo":{"Mujtaba":{"Cards":[],"NumberOfCards":3,"Score":0,"Uno":False},"Mona":{"Cards":[],
-            #                                                                                                                         "NumberOfCards":6,"Score":0,"Uno":False},"Ranju":{"Cards":["r1","r3","r4","r8"],"NumberOfCards":2,"Score":0,"Uno":False},
-            #                                                  "Nandu":{"Cards":["g1","y3","y4","y8"],"NumberOfCards":11,"Score":0,"Uno":False}}},
-            #                      "avilableCards":["b1","b3","b4","b8","..."]}
             room_info = cards_string_json["RoomInfo"]
             board_info = cards_string_json["BoardInfo"]
             players = board_info["PlayersInfo"]
             room_name = room_info["RoomName"]
+            current_turn_name = board_info["CurrentTurn"]
             folder_path = os.getcwd()
             collection = "Images"
             file_path = os.path.join(folder_path, collection)
@@ -193,6 +217,10 @@ class Application(tk.Frame):
                 open_card_label.image = open_card_dis
                 open_card_label.pack(anchor=tk.CENTER)
             #self.fetch_game_to_server(room_name, cards_string_json)
+            current_turn = tk.Label(self, text=current_turn_name)
+            current_turn.pack(side='bottom')
+            open_card_label_for_mac = tk.Label(self, text=board_info["OpenCard"])
+            open_card_label_for_mac.pack(side='bottom')
             fetch_game_info = tk.Button(self, text="Fetch Game Information", command=lambda rm=room_name: self.fetch_game_to_server(rm, cards_string_json))
             fetch_game_info.pack(side='bottom')
 
