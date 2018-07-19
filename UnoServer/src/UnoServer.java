@@ -350,13 +350,13 @@ public class UnoServer {
 					reverse = (int) cardsInfo.get("Reverse");
 				}
 				
-				if(readyPlayers.size() <= 2){ // if there are 2 only 2 players,
+				if(readyPlayers.size() <= 2){ // if there are only 2 players, (1v1)
 					if(reversible | blockable){
 						nextIndex = cIndex;
-						giveCardsToPlayerIndex = (int)(cIndex + 1)%readyPlayers.size();
 					}else{
 						nextIndex = (int)(cIndex + 1)%readyPlayers.size();
 					}
+					giveCardsToPlayerIndex = (int)(cIndex + 1)%readyPlayers.size();
 					
 				}else{
 					if(reverse == 1){
