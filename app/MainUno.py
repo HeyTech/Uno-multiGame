@@ -5,6 +5,7 @@ import tkinter as tk
 import os
 import json
 from collections import OrderedDict
+import time
 import time, threading
 
 
@@ -81,18 +82,25 @@ class Application(tk.Frame):
 
     def putdowncard_to_server(self, card, room):
         if card == "cc" or card == "wc":
-            color_label = tk.Label(self, text="Please choose the color")
-            color_label.pack(side='bottom')
-            self.color = tk.StringVar()
-            red_color = tk.Button(self, text="red", command=lambda: self.chosen_color("red"))
+            pop_color = tk.Toplevel(self)
+            pop_color.title("Choose Color")
+
+            color_label = tk.Label(pop_color, text="Please choose the color")
+            color_label.pack(side='top')
+
+            red_color = tk.Button(pop_color, text="red")
             red_color.pack(side='bottom')
-            blue_color = tk.Button(self, text="blue", command=lambda: self.chosen_color("blue"))
+
+            blue_color = tk.Button(pop_color, text="blue")
             blue_color.pack(side='bottom')
-            green_color = tk.Button(self, text="green", command=lambda: self.chosen_color("green"))
+
+            green_color = tk.Button(pop_color, text="green")
             green_color.pack(side='bottom')
-            yellow_color = tk.Button(self, text="yellow", command=lambda: self.chosen_color("yellow"))
+
+            yellow_color = tk.Button(pop_color, text="yellow")
             yellow_color.pack(side='bottom')
-            card = card + self.color_chosen
+
+            card = card + 'r'
             print(card)
         else:
             card = card
@@ -116,26 +124,37 @@ class Application(tk.Frame):
     def keep_play(self, choice):
         self.keep_play_choice = choice
 
-    def new_card_to_server(self,roomname):
+    def new_card_to_server(self, roomname):
         new_card_message = "<NewCard " + "\'" + roomname + "\'/>"
         print(new_card_message)
         new_card_return_from_server = json.loads(self.client.send_server_request(new_card_message).decode())
         print(new_card_return_from_server)
-        self.choice = tk.StringVar()
+        print("newcard")
         card = new_card_return_from_server["BoardInfo"]["PlayersInfo"][self.player_name]["Cards"][-1]
         label_message = "This is your new card: " + card
+        print(label_message)
         new_card_dis = tk.Label(self,text=label_message)
         new_card_dis.pack()
-        keep_play_label = tk.Label(self, text="Decide what to do with new card")
-        keep_play_label.pack()
-        keep_button = tk.Button(self, text="keep", command=lambda: self.keep_play("keep"))
+
+        keep_play_pop = tk.Toplevel(self)
+        keep_play_pop.title("Keep or Play")
+
+        keep_play_label = tk.Label(keep_play_pop, text="Decide what to do with new card")
+        keep_play_label.pack(side='top')
+
+        keep_button = tk.Button(keep_play_pop, text="keep")
         keep_button.pack()
-        play_button = tk.Button(self, text="play", command=lambda: self.keep_play("play"))
+
+        play_button = tk.Button(keep_play_pop, text="play")
         play_button.pack()
+
+        self.keep_play_choice = "keep"
         if self.keep_play_choice=="keep":
-            card = ' '
+            print("keep")
+            card = 'Pass'
             #self.putdowncard_to_server(' ',roomname )
         else:
+            print("play")
             #card = new_card_return_from_server["BoardInfo"]["PlayersInfo"][self.player_name]["Cards"][-1]
             card = card
             #self.putdowncard_to_server(card, roomname)
@@ -328,6 +347,8 @@ class Application(tk.Frame):
             self.start_game_response_decoded = self.client.send_server_request(start_game_message).decode()
             print(self.start_game_response_decoded)
             if 'Failed' in self.start_game_response_decoded:
+                failed_message = tk.Label(self, text="All Players are not ready")
+                failed_message.pack()
                 self.go_to_wait_frame(joinroom)
             else:
                 self.start_game_response = json.loads(self.start_game_response_decoded)
