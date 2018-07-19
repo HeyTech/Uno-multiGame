@@ -267,7 +267,7 @@ public class UnoServer {
 			JSONObject cardsInfo =(JSONObject) obj.get("CardsInfo");
 			String openCard = (String) boardInfo.get("OpenCard");
 
-			if(playCard.equals(" ")){
+			if(playCard.equals("pass")){
 				pass = true;
 				playable = true;
 				
@@ -350,14 +350,24 @@ public class UnoServer {
 					reverse = (int) cardsInfo.get("Reverse");
 				}
 				
-				if(reverse == 1){
-					nextIndex = (int)(cIndex + reverse + blocked)%readyPlayers.size();
-					giveCardsToPlayerIndex = (int)(cIndex + reverse)%readyPlayers.size();
-
+				if(readyPlayers.size() <= 2){ // if there are 2 only 2 players,
+					if(reversible | blockable){
+						nextIndex = cIndex;
+						giveCardsToPlayerIndex = (int)(cIndex + 1)%readyPlayers.size();
+					}else{
+						nextIndex = (int)(cIndex + 1)%readyPlayers.size();
+					}
+					
 				}else{
-					nextIndex = (readyPlayers.size() + (cIndex + reverse - blocked))%readyPlayers.size();
-					giveCardsToPlayerIndex = (int)(readyPlayers.size() + (cIndex + reverse))%readyPlayers.size();
-
+					if(reverse == 1){
+						nextIndex = (int)(cIndex + reverse + blocked)%readyPlayers.size();
+						giveCardsToPlayerIndex = (int)(cIndex + reverse)%readyPlayers.size();
+	
+					}else{
+						nextIndex = (readyPlayers.size() + (cIndex + reverse - blocked))%readyPlayers.size();
+						giveCardsToPlayerIndex = (int)(readyPlayers.size() + (cIndex + reverse))%readyPlayers.size();
+	
+					}
 				}
 				boardInfo.put("CurrentTurn", readyPlayers.get(nextIndex)); // new CUrrentTurn (for next round)
 
