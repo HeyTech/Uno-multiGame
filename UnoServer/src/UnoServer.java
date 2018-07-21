@@ -279,7 +279,8 @@ public class UnoServer {
 				playable = true;
 				System.out.println("Card: '"+playCard +"': change color");
 
-			}else if(openCard.indexOf(playCard.charAt(0)) > -1){ // if open card and new playCard are the same color
+			//}else if(openCard.indexOf(playCard.charAt(0)) > -1){ // if open card and new playCard are the same color
+			}if(openCard.matches(".*[" + playCard+ "].*")){
 				playable = true;
 				if("prs".indexOf(playCard.charAt(1)) == 0){ // same color 2+
 					System.out.println("Card: '"+playCard +"': Same color 2+");
@@ -299,12 +300,17 @@ public class UnoServer {
 				}else if("prs".indexOf(playCard.charAt(1)) == 2){ // same color stop(block)
 					System.out.println("Card: '"+playCard +"': Same color block");
 					blockable = true;	
+				}else{
+					System.out.println("Card: '"+playCard +"': Same number");
 				}
 
-			} else if(openCard.indexOf(playCard.charAt(1)) == 1){ // Same number card
+			}
+			/*
+			 else if(openCard.indexOf(playCard.charAt(1)) == 1){ // Same number card
 				System.out.println("Card: '"+playCard +"': Same number card");
 				playable = true;
 			}
+			*/
 
 			if(playable){
 				int nextIndex = 0;
@@ -397,22 +403,17 @@ public class UnoServer {
 						}catch(Exception e){
 							score = (int) player.get("Score");
 						} 
-						
 						player.put("Score", score +1);
+						player.put("NumberOfCards", NumberOfCards-1);
 						System.out.println("GAME ENDED!!!!! " + clientName + "won with score:" + (score +1));
 						out.println("<playCard WON: MATCH OVER/>");
 						out.flush();
-	
-					}else{
-						player.put("NumberOfCards", NumberOfCards-1);
-	
-						// not needed if the game ends, put the new card to discarded array
-						JSONObject CardsInfo = (JSONObject) obj.get("CardsInfo");
-						JSONArray DiscardedCards = (JSONArray) CardsInfo.get("DiscardedCards");
-						
-						pCards.remove(playCard);
-						DiscardedCards.add(playCard);
 					}
+					// not needed if the game ends, put the new card to discarded array
+					JSONObject CardsInfo = (JSONObject) obj.get("CardsInfo");
+					JSONArray DiscardedCards = (JSONArray) CardsInfo.get("DiscardedCards");
+					pCards.remove(playCard);
+					DiscardedCards.add(playCard);
 				}
 				boardInfo.put("OpenCard", playCard);
 			}
@@ -491,38 +492,39 @@ public class UnoServer {
 
 	private static void NewCard(String s, String clientName, PrintWriter out) throws IOException {
 		int giveCards = 1;
-
 		String roomName = s.split("'")[1];
 		String roomFile = roomName + ".txt";
-
+		
 		JsonFormater cls = new JsonFormater();
 		JSONObject obj =  cls.FetchGameInfo(roomFile);
 		JSONObject BoardInfo = (JSONObject) obj.get("BoardInfo");
-		JSONObject PlayersInfo = (JSONObject) BoardInfo.get("PlayersInfo");
-		JSONObject player = (JSONObject) PlayersInfo.get(clientName);
+		String currentTurn = (String) BoardInfo.get("CurrentTurn");
 
-		List<String> cards = (List<String>) player.get("Cards");
-
-		JSONObject CardsInfo = (JSONObject) obj.get("CardsInfo");
-		JSONObject tempCardsInfo = cls.UpdateCardsInfo(CardsInfo, giveCards); // update the list if avilableCards is less then giveCards
-
-		List<String> AvailableCards = (List<String>) tempCardsInfo.get("AvailableCards");
-		List<String> DiscardedCards = (List<String>) tempCardsInfo.get("DiscardedCards");
-
-		CardsInfo.put("AvailableCards", AvailableCards);
-		CardsInfo.put("DiscardedCards", DiscardedCards);	
-
-		List<String> NewCard = (List<String>) tempCardsInfo.get("giveCards");
-		cards.addAll(NewCard);
-		player.put("Cards", cards);
-		player.put("NumberOfCards", cards.size());
-		player.put("Uno", false);
-
-		cls.updateGameFile(obj, roomName+".txt");
-
-		System.out.println("'"+clientName + "' draw a new card: " + NewCard);
-
-		
+		if(currentTurn.equals(clientName)){
+			JSONObject PlayersInfo = (JSONObject) BoardInfo.get("PlayersInfo");
+			JSONObject player = (JSONObject) PlayersInfo.get(clientName);
+	
+			List<String> cards = (List<String>) player.get("Cards");
+	
+			JSONObject CardsInfo = (JSONObject) obj.get("CardsInfo");
+			JSONObject tempCardsInfo = cls.UpdateCardsInfo(CardsInfo, giveCards); // update the list if avilableCards is less then giveCards
+	
+			List<String> AvailableCards = (List<String>) tempCardsInfo.get("AvailableCards");
+			List<String> DiscardedCards = (List<String>) tempCardsInfo.get("DiscardedCards");
+	
+			CardsInfo.put("AvailableCards", AvailableCards);
+			CardsInfo.put("DiscardedCards", DiscardedCards);	
+	
+			List<String> NewCard = (List<String>) tempCardsInfo.get("giveCards");
+			cards.addAll(NewCard);
+			player.put("Cards", cards);
+			player.put("NumberOfCards", cards.size());
+			player.put("Uno", false);
+	
+			cls.updateGameFile(obj, roomName+".txt");
+			System.out.println("'"+clientName + "' draw a new card: " + NewCard);
+		}
+		System.out.println("'"+clientName + "' Failed draw a new card: not his/her turn");
 		JSONObject tempJson = new JSONObject();
 		tempJson.put("RoomInfo", obj.get("RoomInfo"));
 		tempJson.put("BoardInfo", obj.get("BoardInfo"));
@@ -818,10 +820,15 @@ public class UnoServer {
 
 			//String s = "<CreateRoom Name='Naai 1123' Mode='2v2' Capacity='1/4' Players='Mona'/>";
 			String[] sArr = s.replace("/>", "").replace("<CreateRoom ", "").split("'");
-
+			System.out.println(s);
+			System.out.println(s);
+			System.out.println(s);
+			System.out.println(s);
+			System.out.println(s);
+			System.out.println("----------------------------");
 			String roomName = sArr[1];
 			String mode = ( sArr[3].equals("")) ? "Single" : sArr[3];		 // To avoid errors that occur if mode not specified 	
-			String cap = sArr[5];
+			String cap = ( sArr[5].equals("")) ? "1/8" : sArr[5];		 // To avoid errors that occur if mode not specified 
 			String admin = sArr[7];
 
 
@@ -841,7 +848,7 @@ public class UnoServer {
 			reader.close();
 
 			if(nameNotFound){
-				//<Room Name='mujtaba' Mode='Single' Capacity='2/8' Player='mujtaba, Emily'/>
+				//<Room Name='mujtaba' Mode='Single' Capacity='2/8' Player='mujtaba, Metin'/>
 
 				FileWriter writer = new FileWriter("uno.txt",true);
 				String tempRoom = "<Room Name='" +roomName +"' Mode='" +mode+"' Capacity='"+cap+"' Player='"+admin+"'/>";
