@@ -273,12 +273,10 @@ public class UnoServer {
 				
 			}else if(playCard.contains("wc")){ // wild cards 4+
 				playable = blockable = true; giveCards = 4;
-				playCard = "wc"; 	// Changed name to deleted it the same name as provided in the lists
 				System.out.println("Card: '"+playCard +"': give 4+ and block next");
 
 			}else if(playCard.contains("cc")){ // wild card Change color
 				playable = true;	// Changed name to deleted it the same name as provided in the lists
-				playCard = "cc";
 				System.out.println("Card: '"+playCard +"': change color");
 
 			//}else if(openCard.indexOf(playCard.charAt(0)) > -1){ // if open card and new playCard are the same color
@@ -414,9 +412,18 @@ public class UnoServer {
 					// not needed if the game ends, put the new card to discarded array
 					JSONObject CardsInfo = (JSONObject) obj.get("CardsInfo");
 					JSONArray DiscardedCards = (JSONArray) CardsInfo.get("DiscardedCards");
-					pCards.remove(playCard);
-					DiscardedCards.add(playCard);
+
 					boardInfo.put("OpenCard", playCard);
+					
+					if(playCard.length() > 2){ // if is wild card with color (wcr, ccb...)
+						String tempPlayCard = playCard.substring(0, 2);
+						pCards.remove(tempPlayCard);
+						DiscardedCards.add(tempPlayCard);
+					}else{
+						pCards.remove(playCard);
+						DiscardedCards.add(playCard);
+					}
+
 				}
 			}
 		}
