@@ -273,10 +273,12 @@ public class UnoServer {
 				
 			}else if(playCard.contains("wc")){ // wild cards 4+
 				playable = blockable = true; giveCards = 4;
+				playCard = "wc"; 	// Changed name to deleted it the same name as provided in the lists
 				System.out.println("Card: '"+playCard +"': give 4+ and block next");
 
 			}else if(playCard.contains("cc")){ // wild card Change color
-				playable = true;
+				playable = true;	// Changed name to deleted it the same name as provided in the lists
+				playCard = "cc";
 				System.out.println("Card: '"+playCard +"': change color");
 
 			//}else if(openCard.indexOf(playCard.charAt(0)) > -1){ // if open card and new playCard are the same color
@@ -414,8 +416,8 @@ public class UnoServer {
 					JSONArray DiscardedCards = (JSONArray) CardsInfo.get("DiscardedCards");
 					pCards.remove(playCard);
 					DiscardedCards.add(playCard);
+					boardInfo.put("OpenCard", playCard);
 				}
-				boardInfo.put("OpenCard", playCard);
 			}
 		}
 		
@@ -669,24 +671,27 @@ public class UnoServer {
 			boolean changePlayerTitle = false;
 
 			while((line = reader.readLine()) != null){
-				if(line.startsWith("<Room Name='" +roomName +"'")){
+				if(line.startsWith("<Room Name='" +roomName +"'")){  // Check if room exist
 					roomNotFound = false;
 					String[] b = line.split("'");
 					rdy = Integer.parseInt(b[5].split("/")[0]);
 					cap = Integer.parseInt(b[5].split("/")[1]);
 
+					JSONObject obj = cls.FetchGameInfo(roomName + ".txt");						
+					JSONObject RoomInfo = (JSONObject) obj.get("RoomInfo");
+					boolean gameStarted = (boolean) RoomInfo.get("GameStarted");
+							
 					if(line.contains(playerName)){ // if player is already in a game (rejoins)
 						changePlayerTitle = true;
-						JSONObject newObj = cls.FetchGameInfo(roomName + ".txt");						
 
 						JSONObject tempJson = new JSONObject();
-						tempJson.put("RoomInfo", newObj.get("RoomInfo"));
-						tempJson.put("BoardInfo", newObj.get("BoardInfo"));
+						tempJson.put("RoomInfo", obj.get("RoomInfo"));
+						tempJson.put("BoardInfo", obj.get("BoardInfo"));
 						out.print(tempJson);
 						out.flush();
-						System.out.println("'" + playerName + "' Successfully join room: "+ newObj);
+						System.out.println("'" + playerName + "' Successfully join room: "+ obj);
 					}
-					else if(rdy < cap){ // if player want to join a new Game Room
+					else if(rdy < cap && !gameStarted){ // if player want to join a new Game Room
 						changePlayerTitle = true;
 						line = line.replace((rdy +"/"+cap).toString(), ((rdy+1) +"/"+cap).toString());
 						line = line.replaceAll("'/>", ", " + playerName + "'/>");
@@ -820,12 +825,6 @@ public class UnoServer {
 
 			//String s = "<CreateRoom Name='Naai 1123' Mode='2v2' Capacity='1/4' Players='Mona'/>";
 			String[] sArr = s.replace("/>", "").replace("<CreateRoom ", "").split("'");
-			System.out.println(s);
-			System.out.println(s);
-			System.out.println(s);
-			System.out.println(s);
-			System.out.println(s);
-			System.out.println("----------------------------");
 			String roomName = sArr[1];
 			String mode = ( sArr[3].equals("")) ? "Single" : sArr[3];		 // To avoid errors that occur if mode not specified 	
 			String cap = ( sArr[5].equals("")) ? "1/8" : sArr[5];		 // To avoid errors that occur if mode not specified 
