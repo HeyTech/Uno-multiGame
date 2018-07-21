@@ -5,7 +5,6 @@ import tkinter as tk
 import os
 import json
 from collections import OrderedDict
-import time
 import time, threading
 
 
@@ -74,36 +73,13 @@ class Application(tk.Frame):
         from_server = (self.client.send_server_request("<Exit/>")).decode()
         if "Successfully" in from_server:
             sys.exit()
+
     def winning_page(self):
         pass
 
-    def chosen_color(self, color):
+    def chosen_color(self, color, room, card):
         self.color_chosen = color[0]
-
-    def putdowncard_to_server(self, card, room):
-        if card == "cc" or card == "wc":
-            pop_color = tk.Toplevel(self)
-            pop_color.title("Choose Color")
-
-            color_label = tk.Label(pop_color, text="Please choose the color")
-            color_label.pack(side='top')
-
-            red_color = tk.Button(pop_color, text="red")
-            red_color.pack(side='bottom')
-
-            blue_color = tk.Button(pop_color, text="blue")
-            blue_color.pack(side='bottom')
-
-            green_color = tk.Button(pop_color, text="green")
-            green_color.pack(side='bottom')
-
-            yellow_color = tk.Button(pop_color, text="yellow")
-            yellow_color.pack(side='bottom')
-
-            card = card + 'r'
-            print(card)
-        else:
-            card = card
+        card = card + self.color_chosen
         message_to_server_to_throw_cards = "<PlayingCard " + "\'" + room + "\' \'" + card + "\'/>"
         print(message_to_server_to_throw_cards)
         put_down_card_to_server = self.client.send_server_request(message_to_server_to_throw_cards).decode()
@@ -114,6 +90,40 @@ class Application(tk.Frame):
             put_down_from_server = json.loads(put_down_card_to_server)
             self.game_play(put_down_from_server)
 
+    def putdowncard_to_server(self, card, room):
+        if card == "cc" or card == "wc":
+            pop_color = tk.Toplevel(self)
+            pop_color.title("Choose Color")
+            pop_color.grab_set()
+
+            color_label = tk.Label(pop_color, text="Please choose the color")
+            color_label.pack(side='top')
+            message_label = tk.Label(pop_color, text="Please close the window after making your choice")
+            message_label.pack(side='bottom')
+            red_color = tk.Button(pop_color, text="red", command=lambda : self.chosen_color("red", room, card))
+            red_color.pack(side='bottom')
+
+            blue_color = tk.Button(pop_color, text="blue", command=lambda : self.chosen_color("blue", room, card))
+            blue_color.pack(side='bottom')
+
+            green_color = tk.Button(pop_color, text="green", command=lambda : self.chosen_color("green", room, card))
+            green_color.pack(side='bottom')
+
+            yellow_color = tk.Button(pop_color, text="yellow", command=lambda : self.chosen_color("yellow", room, card))
+            yellow_color.pack(side='bottom')
+
+        else:
+            card = card
+            message_to_server_to_throw_cards = "<PlayingCard " + "\'" + room + "\' \'" + card + "\'/>"
+            print(message_to_server_to_throw_cards)
+            put_down_card_to_server = self.client.send_server_request(message_to_server_to_throw_cards).decode()
+            print(put_down_card_to_server)
+            if "Over" in put_down_card_to_server:
+                self.winning_page()
+            else:
+                put_down_from_server = json.loads(put_down_card_to_server)
+                self.game_play(put_down_from_server)
+
     def uno_to_server(self, roomname, player):
         uno_message = "<Uno " + "\'" + roomname + "\' " + "\'" + player + "\'/>"
         print(uno_message)
@@ -121,8 +131,21 @@ class Application(tk.Frame):
         print(uno_return_from_server)
         self.game_play(uno_return_from_server)
 
-    def keep_play(self, choice):
+    def keep_play(self, choice, card, roomname):
+        to_new_card = "This is your new card: " + card
+        card_label = tk.Label(self, text=to_new_card)
+        card_label.pack()
         self.keep_play_choice = choice
+        if self.keep_play_choice=="keep":
+            print("keep")
+            card = 'pass'
+            #self.putdowncard_to_server(' ',roomname )
+        else:
+            print("play")
+            #card = new_card_return_from_server["BoardInfo"]["PlayersInfo"][self.player_name]["Cards"][-1]
+            card = card
+            #self.putdowncard_to_server(card, roomname)
+        self.putdowncard_to_server(card, roomname)
 
     def new_card_to_server(self, roomname):
         new_card_message = "<NewCard " + "\'" + roomname + "\'/>"
@@ -138,27 +161,22 @@ class Application(tk.Frame):
 
         keep_play_pop = tk.Toplevel(self)
         keep_play_pop.title("Keep or Play")
+        keep_play_pop.grab_set()
 
         keep_play_label = tk.Label(keep_play_pop, text="Decide what to do with new card")
         keep_play_label.pack(side='top')
 
-        keep_button = tk.Button(keep_play_pop, text="keep")
+        message_label = tk.Label(keep_play_pop, text="Please close the window after making your choice")
+        message_label.pack(side='bottom')
+
+        keep_button = tk.Button(keep_play_pop, text="keep", command=lambda : self.keep_play("keep", card, roomname))
         keep_button.pack()
 
-        play_button = tk.Button(keep_play_pop, text="play")
+        play_button = tk.Button(keep_play_pop, text="play", command=lambda : self.keep_play("play", card, roomname))
         play_button.pack()
 
-        self.keep_play_choice = "keep"
-        if self.keep_play_choice=="keep":
-            print("keep")
-            card = 'Pass'
-            #self.putdowncard_to_server(' ',roomname )
-        else:
-            print("play")
-            #card = new_card_return_from_server["BoardInfo"]["PlayersInfo"][self.player_name]["Cards"][-1]
-            card = card
-            #self.putdowncard_to_server(card, roomname)
-        self.putdowncard_to_server(card, roomname)
+        #self.keep_play_choice = "keep"
+
         # self.game_play(new_card_return_from_server)
 
     def fetch_game_to_server(self, roomname, joinroom):
@@ -258,8 +276,10 @@ class Application(tk.Frame):
         name_of_the_room = self.room_name.get()
         if self.selected_option == "Single":
             capacity = "1/8"
-        else:
+        elif self.selected_option == "2V2":
             capacity = "1/4"
+        else:
+            capacity = ""
         print("<CreateRoom Name=" + str('\'') + str(name_of_the_room) + str('\'') + " Mode=" + str('\'') +
               str(self.selected_option) + str('\'') + " Capacity=" + str('\'') + str(capacity) + str('\'') +
               " Player=" + str('\'') + str(self.player_name) + str('\'/>'))
@@ -354,11 +374,9 @@ class Application(tk.Frame):
                 self.start_game_response = json.loads(self.start_game_response_decoded)
                 self.game_play(self.start_game_response)
 
-
-
-
         def getting_ready():
             ready_message = "<GettingReady '" + room_name + '\' \'' + self.player_name + '\'/>'
+            print(ready_message)
             self.ready_message = json.loads((self.client.send_server_request(ready_message)).decode())
             print(self.ready_message)
             self.go_to_wait_frame(self.ready_message)
@@ -367,9 +385,13 @@ class Application(tk.Frame):
 
         def button_team_click(name):
             command_to_server_teamselection = "<ChooseTeam '" + room_name + '\' \'' + self.player_name + '\' \'' + name + '\'/>'
+            print(command_to_server_teamselection)
             self.team_join_message = json.loads((self.client.send_server_request(command_to_server_teamselection)).decode())
             print(self.team_join_message)
+            my_label = tk.Label(self, text="Ranjani")
+            my_label.pack()
             self.go_to_wait_frame(self.team_join_message)
+
         if mode == "Single":
             self.listbox_single = tk.Listbox(self)
             for player in players:
@@ -379,7 +401,6 @@ class Application(tk.Frame):
             self.listbox_single.pack(side="bottom")
             self.exit_button = tk.Button(self, text="Exit", command=self.exit)
             self.exit_button.pack(side='bottom')
-
         else:
             i = 0
             side_waitframe = ["right", "left"]
@@ -399,6 +420,7 @@ class Application(tk.Frame):
                 i += 1
             self.exit_button = tk.Button(self, text="Exit", command=self.exit)
             self.exit_button.pack(side='bottom')
+
         if admin == self.player_name:
             start_game = tk.Button(self, text="Start Game", command=lambda rm=room_name: start_game_to_server(rm, join_room))
             start_game.pack(side='bottom')
